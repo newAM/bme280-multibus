@@ -706,6 +706,70 @@ impl Default for CtrlMeas {
     }
 }
 
+/// Status register
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+pub struct Status(u8);
+
+impl Status {
+    /// Get the reset value of the ctrl_meas register.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use bme280::Status;
+    ///
+    /// assert_eq!(Status::reset(), Status::default());
+    /// ```
+    #[must_use = "reset returns a Status struct with the reset value"]
+    pub const fn reset() -> Status {
+        Status(0x00)
+    }
+
+    /// Measuring field.
+    ///
+    /// Automatically set to `true` whenever a conversion is running and back to
+    /// `false` when the results have been transferred to the data registers.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// assert!(!bme280::Status::reset().measuring());
+    /// ```
+    pub const fn measuring(&self) -> bool {
+        self.0 & (1 << 3) != 0
+    }
+
+    /// im_update field.
+    ///
+    /// Automatically set to `true` when the NVM data are being copied to image
+    /// registers and back to `false` when the copying is done.
+    /// The data is copied at power-on-reset and before every conversion.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// assert!(!bme280::Status::reset().im_update());
+    /// ```
+    pub const fn im_update(&self) -> bool {
+        self.0 & 1 != 0
+    }
+}
+
+impl core::fmt::Display for Status {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("Status")
+            .field("measuring", &self.measuring())
+            .field("im_update", &self.im_update())
+            .finish()
+    }
+}
+
+impl Default for Status {
+    fn default() -> Self {
+        Status::reset()
+    }
+}
+
 /// BME280 initialization settings.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Settings {
@@ -1014,6 +1078,34 @@ where
             state: Uninit,
             cal: None,
         })
+    }
+
+    /// Get the status of the device.
+    ///
+    /// # Example
+    ///
+    /// Check if a conversion is running.
+    ///
+    /// ```
+    /// # use embedded_hal_mock as hal;
+    /// # let i2c = hal::i2c::Mock::new(&[
+    /// #   hal::i2c::Transaction::write(0x76, vec![0xF2, 0]),
+    /// #   hal::i2c::Transaction::write(0x76, vec![0xF4, 0, 0]),
+    /// #   hal::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
+    /// #   hal::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
+    /// #   hal::i2c::Transaction::write_read(0x76, vec![0xF3], vec![0]),
+    /// # ]);
+    /// use bme280::{Bme280, CtrlMeas, Init, Mode, Settings};
+    ///
+    /// let mut bme: Bme280<_, Init> =
+    ///     Bme280::new(i2c, bme280::Address::SdoGnd).init(&Settings::default())?;
+    ///
+    /// let conversion_running: bool = bme.status()?.measuring();
+    /// # Ok::<(), hal::MockError>(())
+    pub fn status(&mut self) -> Result<Status, E> {
+        let mut buf: [u8; 1] = [0];
+        self.read_regs(reg::STATUS, &mut buf)?;
+        Ok(Status(buf[0]))
     }
 }
 

@@ -19,3 +19,7 @@ embedded-hal = "0.2.4"
 
 [dev-dependencies]
 embedded-hal-mock = "0.7.2"
+
+[dev-dependencies.ftd2xx-embedded-hal]
+git = "https://github.com/newAM/ftd2xx-embedded-hal.git"
+rev = "0745886108c4b42d881ccc69f35efd4ceada09fd"
