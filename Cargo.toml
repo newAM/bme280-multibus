@@ -3,7 +3,19 @@ name = "bme280"
 version = "0.1.0"
 authors = ["Alex M. <alexmgit@protonmail.com>"]
 edition = "2018"
+repository = "https://github.com/newAM/bme280-rs"
+license = "MIT"
+description = "Driver for the Bosch BME280."
+readme = "README.md"
+keywords = ["i2c", "driver", "embedded-hal-driver", "bosch", "bme280"]
+categories = ["embedded", "hardware-support", "no-std"]
+homepage = "https://github.com/newAM/bme280-rs"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[badges]
+maintenance = { status = "experimental" }
 
 [dependencies]
+embedded-hal = "0.2.4"
+
+[dev-dependencies]
+embedded-hal-mock = "0.7.2"
