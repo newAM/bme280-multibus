@@ -388,18 +388,6 @@ impl From<Filter> for u8 {
     }
 }
 
-// impl From<u8> for Filter {
-//     fn from(x: u8) -> Self {
-//         match x & 0b111 {
-//             0b000 => Filter::Off,
-//             0b001 => Filter::X2,
-//             0b010 => Filter::X4,
-//             0b011 => Filter::X8,
-//             _ => Filter::X16,
-//         }
-//     }
-// }
-
 /// Config register.
 ///
 /// This register sets the rate, filter, and interface options of the device.
@@ -789,6 +777,7 @@ pub enum Address {
 /// More information about type states can be found in the [rust-embedded book].
 ///
 /// [rust-embedded book]: https://docs.rust-embedded.org/book/static-guarantees/design-contracts.html
+#[derive(Debug)]
 pub struct Init;
 
 /// Type state for an uninitialized BME280.
@@ -796,6 +785,7 @@ pub struct Init;
 /// More information about type states can be found in the [rust-embedded book].
 ///
 /// [rust-embedded book]: https://docs.rust-embedded.org/book/static-guarantees/design-contracts.html
+#[derive(Debug)]
 pub struct Uninit;
 
 /// BME280 device.
