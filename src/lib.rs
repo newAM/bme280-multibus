@@ -684,7 +684,7 @@ impl CtrlMeas {
     /// [datasheet]: https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bme280-ds002.pdf
     #[must_use = "set_osrs_p returns a modified CtrlMeas"]
     pub const fn set_mode(self, m: Mode) -> CtrlMeas {
-        CtrlMeas((self.0 & 0xFD) | (m as u8))
+        CtrlMeas((self.0 & 0xFC) | (m as u8))
     }
 
     /// Get the mode.
@@ -1045,23 +1045,20 @@ where
     /// #   hal::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
     /// #   hal::i2c::Transaction::write(0x76, vec![0xE0, 0xB6]),
     /// # ]);
-    /// use bme280::{
-    ///     Address, Bme280, Config, CtrlMeas, Filter, Init, Mode, Oversampling, Settings, Standby,
-    ///     Uninit,
+    /// use bme280::{Bme280, Init, Sample, Standby, Uninit};
+    ///
+    /// const SETTINGS: bme280::Settings = bme280::Settings {
+    ///     config: bme280::Config::reset()
+    ///         .set_standby_time(bme280::Standby::Millis1000)
+    ///         .set_filter(bme280::Filter::X16),
+    ///     ctrl_meas: bme280::CtrlMeas::reset()
+    ///         .set_osrs_t(bme280::Oversampling::X8)
+    ///         .set_osrs_p(bme280::Oversampling::X8)
+    ///         .set_mode(bme280::Mode::Normal),
+    ///     ctrl_hum: bme280::Oversampling::X8,
     /// };
     ///
-    /// const SETTINGS: Settings = Settings {
-    ///     config: Config::reset()
-    ///         .set_standby_time(Standby::Millis1000)
-    ///         .set_filter(Filter::X16),
-    ///     ctrl_meas: CtrlMeas::reset()
-    ///         .set_osrs_t(Oversampling::X8)
-    ///         .set_osrs_p(Oversampling::X8)
-    ///         .set_mode(Mode::Normal),
-    ///     ctrl_hum: Oversampling::X8,
-    /// };
-    ///
-    /// let mut bme: Bme280<_, Uninit> = Bme280::new(i2c, Address::SdoGnd);
+    /// let mut bme: Bme280<_, Uninit> = Bme280::new(i2c, bme280::Address::SdoGnd);
     /// let mut bme: Bme280<_, Init> = bme.init(&SETTINGS)?;
     /// let mut bme: Bme280<_, Uninit> = bme.reset()?;
     /// # Ok::<(), hal::MockError>(())
@@ -1124,23 +1121,20 @@ where
     /// #   hal::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
     /// #   hal::i2c::Transaction::write_read(0x76, vec![0xF7], vec![0; 8]),
     /// # ]);
-    /// use bme280::{
-    ///     Address, Bme280, Config, CtrlMeas, Filter, Init, Mode, Oversampling, Sample, Settings,
-    ///     Standby, Uninit,
+    /// use bme280::{Bme280, Init, Sample, Standby, Uninit};
+    ///
+    /// const SETTINGS: bme280::Settings = bme280::Settings {
+    ///     config: bme280::Config::reset()
+    ///         .set_standby_time(bme280::Standby::Millis1000)
+    ///         .set_filter(bme280::Filter::X16),
+    ///     ctrl_meas: bme280::CtrlMeas::reset()
+    ///         .set_osrs_t(bme280::Oversampling::X8)
+    ///         .set_osrs_p(bme280::Oversampling::X8)
+    ///         .set_mode(bme280::Mode::Normal),
+    ///     ctrl_hum: bme280::Oversampling::X8,
     /// };
     ///
-    /// const SETTINGS: Settings = Settings {
-    ///     config: Config::reset()
-    ///         .set_standby_time(Standby::Millis1000)
-    ///         .set_filter(Filter::X16),
-    ///     ctrl_meas: CtrlMeas::reset()
-    ///         .set_osrs_t(Oversampling::X8)
-    ///         .set_osrs_p(Oversampling::X8)
-    ///         .set_mode(Mode::Normal),
-    ///     ctrl_hum: Oversampling::X8,
-    /// };
-    ///
-    /// let mut bme: Bme280<_, Uninit> = Bme280::new(i2c, Address::SdoGnd);
+    /// let mut bme: Bme280<_, Uninit> = Bme280::new(i2c, bme280::Address::SdoGnd);
     /// let mut bme: Bme280<_, Init> = bme.init(&SETTINGS)?;
     /// let sample: Sample = bme.sample()?;
     /// # Ok::<(), hal::MockError>(())

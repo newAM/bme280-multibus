@@ -28,7 +28,11 @@ fn main() {
         .expect("Failed to initialize MPSSE");
     let i2c: hal::I2c = ftdi.i2c().expect("Failed to initialize I2C");
 
-    let mut bme: Bme280<hal::I2c, bme280::Uninit> = Bme280::new(i2c, bme280::Address::SdoVddio);
+    let mut bme: Bme280<hal::I2c, bme280::Uninit> = Bme280::new(i2c, bme280::Address::SdoVddio)
+        .reset()
+        .expect("Failed to reset");
+
+    std::thread::sleep(std::time::Duration::from_millis(2));
 
     // sanity check
     assert_eq!(bme.chip_id().expect("Failed to read chip ID"), CHIP_ID);
