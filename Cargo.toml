@@ -19,4 +19,4 @@ embedded-hal = "~0.2.4"
 
 [dev-dependencies]
 embedded-hal-mock = "~0.7.2"
-ftd2xx-embedded-hal = "~0.8.0"
+ftd2xx-embedded-hal = "~0.9.0"

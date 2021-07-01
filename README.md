@@ -9,12 +9,12 @@ The BME280 presents some design challenges, it is stateful, and it has
 multiple bus options (3-wire SPI, 4-wire SPI, I2C).
 
 This is just another BME280 driver implementation that I made for my own
-usecases (I2C + continuous sampling).
+usecases (I2C or SPI + continuous sampling).
 
 ## Example
 
 ```rust
-use bme280::{Bme280, Init, Sample, Standby, Uninit};
+use bme280::{Bme280, Sample, Standby, i2c::Address};
 
 const SETTINGS: bme280::Settings = bme280::Settings {
     config: bme280::Config::reset()
@@ -27,7 +27,7 @@ const SETTINGS: bme280::Settings = bme280::Settings {
     ctrl_hum: bme280::Oversampling::X8,
 };
 
-let mut bme: Bme280<_, Uninit> = Bme280::new(i2c, bme280::Address::SdoGnd);
-let mut bme: Bme280<_, Init> = bme.init(&SETTINGS)?;
+let mut bme: Bme280<_> = Bme280::from_i2c(i2c, Address::SdoGnd)?;
+bme.settings(&SETTINGS)?;
 let sample: Sample = bme.sample()?;
 ```
