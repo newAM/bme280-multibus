@@ -4,20 +4,21 @@
 //! multiple bus options (3-wire SPI, 4-wire SPI, I2C).
 //!
 //! This is just another BME280 driver implementation that I made for my own
-//! usecases (I2C + continuous sampling).
+//! usecases (I2C or SPI + continuous sampling).
 //!
 //! # Example
 //!
 //! ```
 //! # use embedded_hal_mock as hal;
 //! # let i2c = hal::i2c::Mock::new(&[
-//! #   hal::i2c::Transaction::write(0x76, vec![0xF2, 0b100]),
-//! #   hal::i2c::Transaction::write(0x76, vec![0xF4, 0b10010011, 0b10110000]),
 //! #   hal::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
 //! #   hal::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
+//! #   hal::i2c::Transaction::write(0x76, vec![0xF2, 0b100]),
+//! #   hal::i2c::Transaction::write(0x76, vec![0xF4, 0b10010011]),
+//! #   hal::i2c::Transaction::write(0x76, vec![0xF5, 0b10110000]),
 //! #   hal::i2c::Transaction::write_read(0x76, vec![0xF7], vec![0; 8]),
 //! # ]);
-//! use bme280::{Bme280, Init, Sample, Standby, Uninit};
+//! use bme280::{i2c::Address, Bme280, Sample, Standby};
 //!
 //! const SETTINGS: bme280::Settings = bme280::Settings {
 //!     config: bme280::Config::reset()
@@ -30,15 +31,21 @@
 //!     ctrl_hum: bme280::Oversampling::X8,
 //! };
 //!
-//! let mut bme: Bme280<_, Uninit> = Bme280::new(i2c, bme280::Address::SdoGnd);
-//! let mut bme: Bme280<_, Init> = bme.init(&SETTINGS)?;
+//! let mut bme: Bme280<_> = Bme280::from_i2c(i2c, Address::SdoGnd)?;
+//! bme.settings(&SETTINGS)?;
 //! let sample: Sample = bme.sample()?;
 //! # Ok::<(), hal::MockError>(())
 //! ```
 #![no_std]
-#![forbid(missing_docs)]
+#![forbid(unsafe_code)]
+#![deny(missing_docs)]
 
 use core::time::Duration;
+
+/// BME280 I2C bus implementation
+pub mod i2c;
+/// BME280 SPI bus implementation
+pub mod spi;
 
 /// BME280 chip ID.
 pub const CHIP_ID: u8 = 0x60;
@@ -46,8 +53,10 @@ pub const CHIP_ID: u8 = 0x60;
 const NUM_CALIB_REG: usize = 33;
 const NUM_MEAS_REG: usize = 8;
 
+/// BME280 calibration data.
 #[derive(Debug)]
-struct Calibration {
+#[allow(missing_docs)]
+pub struct Calibration {
     t1: u16, // 0x88..0x89 buf[00:01]
     t2: i16, // 0x8A..0x8B buf[02:03]
     t3: i16, // 0x8C..0x8D buf[04:05]
@@ -823,129 +832,14 @@ pub struct Sample {
     pub humidity: f32,
 }
 
-/// I2C device address.
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
-#[repr(u8)]
-pub enum Address {
-    /// SDO pin is connected to GND.
-    SdoGnd = 0x76,
-    /// SDO pin is connected to V<sub>DDIO</sub>
-    SdoVddio = 0x77,
-}
+/// BME280 bus, I2C or SPI.
+pub trait Bme280Bus {
+    /// BME280 bus error.
+    type Error;
 
-/// Type state for an initialized BME280.
-///
-/// More information about type states can be found in the [rust-embedded book].
-///
-/// [rust-embedded book]: https://docs.rust-embedded.org/book/static-guarantees/design-contracts.html
-#[derive(Debug)]
-pub struct Init;
-
-/// Type state for an uninitialized BME280.
-///
-/// More information about type states can be found in the [rust-embedded book].
-///
-/// [rust-embedded book]: https://docs.rust-embedded.org/book/static-guarantees/design-contracts.html
-#[derive(Debug)]
-pub struct Uninit;
-
-/// BME280 device.
-#[derive(Debug)]
-pub struct Bme280<B, S> {
-    address: u8,
-    bus: B,
-    state: S,
-    cal: Option<crate::Calibration>,
-}
-
-impl<B, E> Bme280<B, Uninit>
-where
-    B: embedded_hal::blocking::i2c::Write<Error = E>
-        + embedded_hal::blocking::i2c::WriteRead<Error = E>,
-{
-    /// Creates a new `Bme280` driver from a I2C peripheral, and an I2C
-    /// device address.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use embedded_hal_mock as hal;
-    /// # let i2c = hal::i2c::Mock::new(&[]);
-    /// use bme280::{Address, Bme280};
-    ///
-    /// let mut bme: Bme280<_, _> = Bme280::new(i2c, Address::SdoGnd);
-    /// ```
-    pub fn new(bus: B, address: Address) -> Self {
-        Bme280 {
-            bus,
-            address: address as u8,
-            state: Uninit,
-            cal: None,
-        }
-    }
-
-    /// Initialize the BME280.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use embedded_hal_mock as hal;
-    /// # let i2c = hal::i2c::Mock::new(&[
-    /// #   hal::i2c::Transaction::write(0x76, vec![0xF2, 0b100]),
-    /// #   hal::i2c::Transaction::write(0x76, vec![0xF4, 0b10010011, 0b10110000]),
-    /// #   hal::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
-    /// #   hal::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
-    /// # ]);
-    /// use bme280::{
-    ///     Address, Bme280, Config, CtrlMeas, Filter, Init, Mode, Oversampling, Settings, Standby,
-    ///     Uninit,
-    /// };
-    ///
-    /// const SETTINGS: Settings = Settings {
-    ///     config: Config::reset()
-    ///         .set_standby_time(Standby::Millis1000)
-    ///         .set_filter(Filter::X16),
-    ///     ctrl_meas: CtrlMeas::reset()
-    ///         .set_osrs_t(Oversampling::X8)
-    ///         .set_osrs_p(Oversampling::X8)
-    ///         .set_mode(Mode::Normal),
-    ///     ctrl_hum: Oversampling::X8,
-    /// };
-    ///
-    /// let mut bme: Bme280<_, Uninit> = Bme280::new(i2c, Address::SdoGnd);
-    /// let mut bme: Bme280<_, Init> = bme.init(&SETTINGS)?;
-    /// # Ok::<(), hal::MockError>(())
-    /// ```
-    pub fn init(mut self, settings: &Settings) -> Result<Bme280<B, Init>, E> {
-        // set configuration
-        self.write_regs(&[reg::CTRL_HUM, settings.ctrl_hum as u8])?;
-        self.write_regs(&[reg::CTRL_MEAS, settings.ctrl_meas.0, settings.config.0])?;
-
-        // read calibration
-        const FIRST: usize = (reg::CALIB_25 - reg::CALIB_00 + 1) as usize;
-        debug_assert_eq!(FIRST, 26);
-        const SECOND: usize = (reg::CALIB_32 - reg::CALIB_26 + 1) as usize;
-        debug_assert_eq!((FIRST + SECOND), NUM_CALIB_REG);
-
-        let mut buf: [u8; NUM_CALIB_REG] = [0; NUM_CALIB_REG];
-        self.read_regs(reg::CALIB_00, &mut buf[0..FIRST])?;
-        self.read_regs(reg::CALIB_26, &mut buf[FIRST..(FIRST + SECOND)])?;
-
-        Ok(Bme280 {
-            bus: self.bus,
-            address: self.address,
-            state: Init,
-            cal: Some(buf.into()),
-        })
-    }
-}
-
-impl<B, S, E> Bme280<B, S>
-where
-    B: embedded_hal::blocking::i2c::Write<Error = E>
-        + embedded_hal::blocking::i2c::WriteRead<Error = E>,
-{
     /// Read from the BME280.
+    ///
+    /// # I2C
     ///
     /// ```text
     /// Read example (BME280 Datasheet Figure 10: I2C multiple byte read)
@@ -955,36 +849,187 @@ where
     /// | S     | 111011x       |  0 |      | xxxxxxxx         |      |
     /// +-------+---------------+----+------+------------------+------+
     ///
-    /// +-------+---------------+----+------+---------------+------+---------------+--------+------+
-    /// | Start | Slave Address | RW | ACKS | Register Data | ACKM | Register Data | NOACKM | Stop |
-    /// +-------+---------------+----+------+---------------+------+---------------+--------+------+
-    /// | S     | 111011x       |  1 |      |      76543210 |      |      76543210 |        | P    |
-    /// +-------+---------------+----+------+---------------+------+---------------+--------+------+
+    ///     +-------+---------------+----+------+---------------+------+---------------+--------+------+
+    /// ... | Start | Slave Address | RW | ACKS | Register Data | ACKM | Register Data | NOACKM | Stop |
+    ///     +-------+---------------+----+------+---------------+------+---------------+--------+------+
+    /// ... | S     | 111011x       |  1 |      | xxxxxxxx      |      | xxxxxxxx      |        | P    |
+    ///     +-------+---------------+----+------+---------------+------+---------------+--------+------+
     /// ```
-    #[inline(always)]
-    pub(crate) fn read_regs(&mut self, reg: u8, buf: &mut [u8]) -> Result<(), E> {
-        self.bus.write_read(self.address, &[reg], buf)
-    }
+    ///
+    /// # SPI
+    ///
+    /// ```text
+    /// Read example (BME280 Datasheet Figure 13: SPI multiple byte read)
+    /// +-------+----+------------------+---------------+
+    /// | Start | RW | Register Address | Register Data |
+    /// +-------+----+------------------+---------------+
+    /// | CSB=0 |  1 | xxxxxxx          | xxxxxxxx      |
+    /// +-------+----+------------------+---------------+
+    ///
+    ///     +---------------+-------+
+    /// ... | Register Data | Stop  |
+    ///     +---------------+-------+
+    /// ... | xxxxxxxx      | CSB=0 |
+    ///     +---------------+-------+
+    /// ```
+    fn read_regs(&mut self, reg: u8, buf: &mut [u8]) -> Result<(), Self::Error>;
 
-    /// Write to the BME280.
+    /// Write a single register to the BME280.
+    ///
+    /// # I2C
     ///
     /// ```text
     /// Write example (BME280 Datasheet Figure 9: I2C multiple byte write)
     /// +-------+---------------+----+------+------------------+------+---------------+------+
     /// | Start | Slave Address | RW | ACKS | Register Address | ACKS | Register Data | ACKS |
     /// +-------+---------------+----+------+------------------+------+---------------+------+
-    /// | S     | 111011x       |  0 |      | xxxxxxxx         |      |      76543210 |      |
+    /// | S     | 111011x       |  0 |      | xxxxxxxx         |      | xxxxxxxx      |      |
     /// +-------+---------------+----+------+------------------+------+---------------+------+
     ///
     ///     +------------------+------+---------------+------+------+
     /// ... | Register Address | ACKS | Register Data | ACKS | Stop |
     ///     +------------------+------+---------------+------+------+
-    /// ... | xxxxxxxx         |      |       7654321 |      | P    |
+    /// ... | xxxxxxxx         |      | xxxxxxxx      |      | P    |
     ///     +------------------+------+---------------+------+------+
     /// ```
-    #[inline(always)]
-    pub(crate) fn write_regs(&mut self, data: &[u8]) -> Result<(), E> {
-        self.bus.write(self.address, data)
+    ///
+    /// # SPI
+    ///
+    /// ```text
+    /// Write example (BME280 Datasheet Figure 12: SPI multiple byte write)
+    /// +-------+----+------------------+---------------+
+    /// | Start | RW | Register Address | Register Data |
+    /// +-------+----+------------------+---------------+
+    /// | CSB=0 |  0 | xxxxxxx          | xxxxxxxx      |
+    /// +-------+----+------------------+---------------+
+    ///
+    ///     +----+------------------+---------------+-------+
+    /// ... | RW | Register Address | Register Data | Stop  |
+    ///     +----+------------------+---------------+-------+
+    /// ... |  0 | xxxxxxx          | xxxxxxxx      | CSB=0 |
+    ///     +----+------------------+---------------+-------+
+    /// ```
+    fn write_reg(&mut self, reg: u8, data: u8) -> Result<(), Self::Error>;
+
+    /// Read the calibration from the chip.
+    fn calibration(&mut self) -> Result<Calibration, Self::Error> {
+        const FIRST: usize = (reg::CALIB_25 - reg::CALIB_00 + 1) as usize;
+        debug_assert_eq!(FIRST, 26);
+        const SECOND: usize = (reg::CALIB_32 - reg::CALIB_26 + 1) as usize;
+        debug_assert_eq!((FIRST + SECOND), NUM_CALIB_REG);
+
+        let mut buf: [u8; NUM_CALIB_REG] = [0; NUM_CALIB_REG];
+        self.read_regs(reg::CALIB_00, &mut buf[0..FIRST])?;
+        self.read_regs(reg::CALIB_26, &mut buf[FIRST..(FIRST + SECOND)])?;
+
+        Ok(buf.into())
+    }
+}
+
+/// BME280 driver.
+#[derive(Debug)]
+pub struct Bme280<B> {
+    bus: B,
+    cal: Calibration,
+}
+
+impl<I2C, E> Bme280<crate::i2c::Bme280Bus<I2C>>
+where
+    I2C: embedded_hal::blocking::i2c::Write<Error = E>
+        + embedded_hal::blocking::i2c::WriteRead<Error = E>,
+{
+    /// Creates a new `Bme280` driver from a I2C peripheral, and an I2C
+    /// device address.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use embedded_hal_mock as hal;
+    /// # let i2c = hal::i2c::Mock::new(&[
+    /// #   hal::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
+    /// #   hal::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
+    /// # ]);
+    /// use bme280::{i2c::Address, Bme280};
+    ///
+    /// let mut bme: Bme280<_> = Bme280::from_i2c(i2c, Address::SdoGnd)?;
+    /// # Ok::<(), hal::MockError>(())
+    /// ```
+    pub fn from_i2c(i2c: I2C, address: crate::i2c::Address) -> Result<Self, E> {
+        let bus = crate::i2c::Bme280Bus::new(i2c, address);
+        Self::new(bus)
+    }
+}
+
+impl<SPI, CS, SpiError, PinError> Bme280<crate::spi::Bme280Bus<SPI, CS>>
+where
+    SPI: embedded_hal::blocking::spi::Transfer<u8, Error = SpiError>
+        + embedded_hal::blocking::spi::Write<u8, Error = SpiError>,
+    CS: embedded_hal::digital::v2::OutputPin<Error = PinError>,
+{
+    /// Creates a new `Bme280` driver from a SPI peripheral and a chip select
+    /// digital I/O pin.
+    ///
+    /// # Safety
+    ///
+    /// The chip select pin must be high before being passed to this function.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use embedded_hal_mock as hal;
+    /// # let spi = hal::spi::Mock::new(&[
+    /// #   hal::spi::Transaction::write(vec![0x88]),
+    /// #   hal::spi::Transaction::transfer(vec![0; 26], vec![0; 26]),
+    /// #   hal::spi::Transaction::write(vec![0xE1]),
+    /// #   hal::spi::Transaction::transfer(vec![0; 7], vec![0; 7]),
+    /// # ]);
+    /// # let mut pin = hal::pin::Mock::new(&[
+    /// #    hal::pin::Transaction::set(hal::pin::State::High),
+    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
+    /// #    hal::pin::Transaction::set(hal::pin::State::High),
+    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
+    /// #    hal::pin::Transaction::set(hal::pin::State::High),
+    /// # ]);
+    /// use bme280::Bme280;
+    /// use embedded_hal::digital::v2::OutputPin;
+    ///
+    /// pin.set_high()?;
+    /// let mut bme: Bme280<_> = Bme280::from_spi(spi, pin)?;
+    /// # Ok::<(), bme280::spi::Error<hal::MockError, hal::MockError>>(())
+    /// ```
+    pub fn from_spi(spi: SPI, cs: CS) -> Result<Self, crate::spi::Error<SpiError, PinError>> {
+        let bus = crate::spi::Bme280Bus::new(spi, cs);
+        Self::new(bus)
+    }
+}
+
+impl<B, E> Bme280<B>
+where
+    B: Bme280Bus<Error = E>,
+{
+    /// Create a new BME280 from a [`spi::Bme280Bus`](crate::spi::Bme280Bus) or
+    /// a [`i2c::Bme280Bus`](crate::i2c::Bme280Bus).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use embedded_hal_mock as hal;
+    /// # let i2c = hal::i2c::Mock::new(&[
+    /// #   hal::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
+    /// #   hal::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
+    /// # ]);
+    /// use bme280::{
+    ///     i2c::{Address, Bme280Bus},
+    ///     Bme280,
+    /// };
+    ///
+    /// let mut bus: Bme280Bus<_> = Bme280Bus::new(i2c, Address::SdoGnd);
+    /// let bme: Bme280<_> = Bme280::new(bus)?;
+    /// # Ok::<(), hal::MockError>(())
+    /// ```
+    pub fn new(mut bus: B) -> Result<Self, E> {
+        let cal: Calibration = bus.calibration()?;
+        Ok(Self { bus, cal })
     }
 
     /// BME280 chip ID.
@@ -998,38 +1043,22 @@ where
     ///
     /// ```
     /// # use embedded_hal_mock as hal;
-    /// # let i2c = hal::i2c::Mock::new(&[hal::i2c::Transaction::write_read(
-    /// #   0x76,
-    /// #   vec![0xD0],
-    /// #   vec![0x60],
-    /// # )]);
-    /// use bme280::{Address, Bme280, CHIP_ID};
+    /// # let i2c = hal::i2c::Mock::new(&[
+    /// #   hal::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
+    /// #   hal::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
+    /// #   hal::i2c::Transaction::write_read(0x76, vec![0xD0], vec![0x60]),
+    /// # ]);
+    /// use bme280::{i2c::Address, Bme280, CHIP_ID};
     ///
-    /// let mut bme: Bme280<_, _> = Bme280::new(i2c, Address::SdoGnd);
+    /// let mut bme: Bme280<_> = Bme280::from_i2c(i2c, Address::SdoGnd)?;
     /// let chip_id: u8 = bme.chip_id()?;
     /// assert_eq!(chip_id, CHIP_ID);
     /// # Ok::<(), hal::MockError>(())
     /// ```
     pub fn chip_id(&mut self) -> Result<u8, E> {
         let mut buf: [u8; 1] = [0];
-        self.read_regs(reg::ID, &mut buf)?;
+        self.bus.read_regs(reg::ID, &mut buf)?;
         Ok(buf[0])
-    }
-
-    /// Free the I2C bus from the BME280.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use embedded_hal_mock as hal;
-    /// # let i2c = hal::i2c::Mock::new(&[]);
-    /// use bme280::{Address, Bme280};
-    ///
-    /// let mut bme: Bme280<_, _> = Bme280::new(i2c, Address::SdoGnd);
-    /// let i2c = bme.free();
-    /// ```
-    pub fn free(self) -> B {
-        self.bus
     }
 
     /// Reset the BME280.
@@ -1039,39 +1068,19 @@ where
     /// ```
     /// # use embedded_hal_mock as hal;
     /// # let i2c = hal::i2c::Mock::new(&[
-    /// #   hal::i2c::Transaction::write(0x76, vec![0xF2, 0b100]),
-    /// #   hal::i2c::Transaction::write(0x76, vec![0xF4, 0b10010011, 0b10110000]),
     /// #   hal::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
     /// #   hal::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
     /// #   hal::i2c::Transaction::write(0x76, vec![0xE0, 0xB6]),
     /// # ]);
-    /// use bme280::{Bme280, Init, Sample, Standby, Uninit};
+    /// use bme280::{i2c::Address, Bme280};
     ///
-    /// const SETTINGS: bme280::Settings = bme280::Settings {
-    ///     config: bme280::Config::reset()
-    ///         .set_standby_time(bme280::Standby::Millis1000)
-    ///         .set_filter(bme280::Filter::X16),
-    ///     ctrl_meas: bme280::CtrlMeas::reset()
-    ///         .set_osrs_t(bme280::Oversampling::X8)
-    ///         .set_osrs_p(bme280::Oversampling::X8)
-    ///         .set_mode(bme280::Mode::Normal),
-    ///     ctrl_hum: bme280::Oversampling::X8,
-    /// };
-    ///
-    /// let mut bme: Bme280<_, Uninit> = Bme280::new(i2c, bme280::Address::SdoGnd);
-    /// let mut bme: Bme280<_, Init> = bme.init(&SETTINGS)?;
-    /// let mut bme: Bme280<_, Uninit> = bme.reset()?;
+    /// let mut bme: Bme280<_> = Bme280::from_i2c(i2c, Address::SdoGnd)?;
+    /// bme.reset()?;
     /// # Ok::<(), hal::MockError>(())
     /// ```
-    pub fn reset(mut self) -> Result<Bme280<B, Uninit>, E> {
+    pub fn reset(&mut self) -> Result<(), E> {
         const RESET_MAGIC: u8 = 0xB6;
-        self.write_regs(&[reg::RESET, RESET_MAGIC])?;
-        Ok(Bme280 {
-            bus: self.bus,
-            address: self.address,
-            state: Uninit,
-            cal: None,
-        })
+        self.bus.write_reg(reg::RESET, RESET_MAGIC)
     }
 
     /// Get the status of the device.
@@ -1083,45 +1092,80 @@ where
     /// ```
     /// # use embedded_hal_mock as hal;
     /// # let i2c = hal::i2c::Mock::new(&[
-    /// #   hal::i2c::Transaction::write(0x76, vec![0xF2, 0]),
-    /// #   hal::i2c::Transaction::write(0x76, vec![0xF4, 0, 0]),
     /// #   hal::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
     /// #   hal::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
     /// #   hal::i2c::Transaction::write_read(0x76, vec![0xF3], vec![0]),
     /// # ]);
-    /// use bme280::{Bme280, CtrlMeas, Init, Mode, Settings};
+    /// use bme280::{i2c::Address, Bme280, Status};
     ///
-    /// let mut bme: Bme280<_, Init> =
-    ///     Bme280::new(i2c, bme280::Address::SdoGnd).init(&Settings::default())?;
-    ///
-    /// let conversion_running: bool = bme.status()?.measuring();
+    /// let mut bme: Bme280<_> = Bme280::from_i2c(i2c, Address::SdoGnd)?;
+    /// let status: Status = bme.status()?;
     /// # Ok::<(), hal::MockError>(())
+    /// ```
     pub fn status(&mut self) -> Result<Status, E> {
         let mut buf: [u8; 1] = [0];
-        self.read_regs(reg::STATUS, &mut buf)?;
+        self.bus.read_regs(reg::STATUS, &mut buf)?;
         Ok(Status(buf[0]))
     }
-}
 
-impl<B, E> Bme280<B, Init>
-where
-    B: embedded_hal::blocking::i2c::Write<Error = E>
-        + embedded_hal::blocking::i2c::WriteRead<Error = E>,
-{
-    /// Read a sample from the BME280.
+    /// Configure the BME280 settings.
     ///
     /// # Example
     ///
     /// ```
     /// # use embedded_hal_mock as hal;
     /// # let i2c = hal::i2c::Mock::new(&[
-    /// #   hal::i2c::Transaction::write(0x76, vec![0xF2, 0b100]),
-    /// #   hal::i2c::Transaction::write(0x76, vec![0xF4, 0b10010011, 0b10110000]),
     /// #   hal::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
     /// #   hal::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
+    /// #   hal::i2c::Transaction::write(0x76, vec![0xF2, 0b100]),
+    /// #   hal::i2c::Transaction::write(0x76, vec![0xF4, 0b10010011]),
+    /// #   hal::i2c::Transaction::write(0x76, vec![0xF5, 0b10110000]),
+    /// # ]);
+    /// use bme280::{
+    ///     i2c::Address, Bme280, Config, CtrlMeas, Filter, Mode, Oversampling, Settings, Standby,
+    /// };
+    ///
+    /// const SETTINGS: Settings = Settings {
+    ///     config: Config::reset()
+    ///         .set_standby_time(Standby::Millis1000)
+    ///         .set_filter(Filter::X16),
+    ///     ctrl_meas: CtrlMeas::reset()
+    ///         .set_osrs_t(Oversampling::X8)
+    ///         .set_osrs_p(Oversampling::X8)
+    ///         .set_mode(Mode::Normal),
+    ///     ctrl_hum: Oversampling::X8,
+    /// };
+    ///
+    /// let mut bme: Bme280<_> = Bme280::from_i2c(i2c, Address::SdoGnd)?;
+    /// bme.settings(&SETTINGS)?;
+    /// # Ok::<(), hal::MockError>(())
+    /// ```
+    pub fn settings(&mut self, settings: &Settings) -> Result<(), E> {
+        self.bus.write_reg(reg::CTRL_HUM, settings.ctrl_hum as u8)?;
+        self.bus.write_reg(reg::CTRL_MEAS, settings.ctrl_meas.0)?;
+        self.bus.write_reg(reg::CONFIG, settings.config.0)
+    }
+
+    /// Read a sample from the BME280.
+    ///
+    /// # Panics
+    ///
+    /// Panics in debug builds if the sample registers are in their reset
+    /// values.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use embedded_hal_mock as hal;
+    /// # let i2c = hal::i2c::Mock::new(&[
+    /// #   hal::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
+    /// #   hal::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
+    /// #   hal::i2c::Transaction::write(0x76, vec![0xF2, 0b100]),
+    /// #   hal::i2c::Transaction::write(0x76, vec![0xF4, 0b10010011]),
+    /// #   hal::i2c::Transaction::write(0x76, vec![0xF5, 0b10110000]),
     /// #   hal::i2c::Transaction::write_read(0x76, vec![0xF7], vec![0; 8]),
     /// # ]);
-    /// use bme280::{Bme280, Init, Sample, Standby, Uninit};
+    /// use bme280::{i2c::Address, Bme280, Sample, Standby};
     ///
     /// const SETTINGS: bme280::Settings = bme280::Settings {
     ///     config: bme280::Config::reset()
@@ -1134,8 +1178,8 @@ where
     ///     ctrl_hum: bme280::Oversampling::X8,
     /// };
     ///
-    /// let mut bme: Bme280<_, Uninit> = Bme280::new(i2c, bme280::Address::SdoGnd);
-    /// let mut bme: Bme280<_, Init> = bme.init(&SETTINGS)?;
+    /// let mut bme: Bme280<_> = Bme280::from_i2c(i2c, Address::SdoGnd)?;
+    /// bme.settings(&SETTINGS)?;
     /// let sample: Sample = bme.sample()?;
     /// # Ok::<(), hal::MockError>(())
     /// ```
@@ -1144,7 +1188,7 @@ where
         // I am not to blame for this.
 
         let mut buf: [u8; NUM_MEAS_REG] = [0; NUM_MEAS_REG];
-        self.read_regs(reg::PRESS_MSB, &mut buf)?;
+        self.bus.read_regs(reg::PRESS_MSB, &mut buf)?;
 
         // msb [7:0] = p[19:12]
         // lsb [7:0] = p[11:4]
@@ -1167,7 +1211,7 @@ where
         let t: i32 = t as i32;
         let h: i32 = h as i32;
 
-        let cal = self.cal.as_ref().unwrap();
+        let cal: &Calibration = &self.cal;
 
         let var1: i32 = (((t >> 3) - ((cal.t1 as i32) << 1)) * (cal.t2 as i32)) >> 11;
         let var2: i32 = (((((t >> 4) - (cal.t1 as i32)) * ((t >> 4) - (cal.t1 as i32))) >> 12)
