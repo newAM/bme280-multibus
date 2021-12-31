@@ -1,4 +1,4 @@
-/// BME280 device.
+/// BME280 bus.
 #[derive(Debug)]
 pub struct Bme280Bus<SPI, CS> {
     bus: SPI,
@@ -23,6 +23,7 @@ pub enum Error<SpiError, PinError> {
 }
 
 impl<SpiError, PinError> From<PinError> for Error<SpiError, PinError> {
+    #[inline]
     fn from(e: PinError) -> Self {
         Error::Pin(e)
     }
@@ -56,6 +57,7 @@ where
     /// let mut bme: Bme280Bus<_, _> = Bme280Bus::new(spi, pin);
     /// # Ok::<(), hal::MockError>(())
     /// ```
+    #[inline]
     pub fn new(bus: SPI, cs: CS) -> Self {
         Bme280Bus { bus, cs }
     }
@@ -78,11 +80,12 @@ where
     /// let (spi, pin) = bme.free();
     /// # Ok::<(), hal::MockError>(())
     /// ```
+    #[inline]
     pub fn free(self) -> (SPI, CS) {
         (self.bus, self.cs)
     }
 
-    #[inline(always)]
+    #[inline]
     fn with_chip_enable<T, E, F>(&mut self, mut f: F) -> Result<T, E>
     where
         F: FnMut(&mut SPI) -> Result<T, E>,

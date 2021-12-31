@@ -1,4 +1,3 @@
-![Maintenance](https://img.shields.io/badge/maintenance-experimental-blue.svg)
 [![CI](https://github.com/newAM/bme280-rs/workflows/CI/badge.svg)](https://github.com/newAM/bme280-rs/actions)
 
 # bme280
@@ -14,7 +13,7 @@ usecases (I2C or SPI + continuous sampling).
 ## Example
 
 ```rust
-use bme280::{Bme280, Sample, Standby, i2c::Address};
+use bme280::{i2c::Address, Bme280, Sample, Standby};
 
 const SETTINGS: bme280::Settings = bme280::Settings {
     config: bme280::Config::reset()
