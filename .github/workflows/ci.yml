@@ -6,7 +6,7 @@ on:
       - 'v*'
   pull_request:
   schedule:
-    - cron: "18 3 * * *"
+    - cron: "18 3 * * 2"
 
 name: CI
 
