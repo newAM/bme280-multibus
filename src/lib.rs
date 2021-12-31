@@ -1227,7 +1227,7 @@ where
         let var2: i64 = var1 * var1 * (cal.p6 as i64);
         let var2: i64 = var2 + ((var1 * (cal.p5 as i64)) << 17);
         let var2: i64 = var2 + ((cal.p4 as i64) << 35);
-        let var1: i64 = ((var1 * var1 * (cal.p3 as i64)) >> 8) + ((var1 * (cal.p4 as i64)) << 12);
+        let var1: i64 = ((var1 * var1 * (cal.p3 as i64)) >> 8) + ((var1 * (cal.p2 as i64)) << 12);
         let var1: i64 = ((((1i64) << 47) + var1) * (cal.p1 as i64)) >> 33;
         let pressure: f32 = if var1 == 0 {
             0.0

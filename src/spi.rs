@@ -5,6 +5,14 @@ pub struct Bme280Bus<SPI, CS> {
     cs: CS,
 }
 
+/// SPI mode for the BME280.
+///
+/// The BME280 also supports mode 3.
+pub const MODE: embedded_hal::spi::Mode = embedded_hal::spi::MODE_0;
+
+/// Maximum SPI bus frequency in hertz.
+pub const MAX_FREQ: u32 = 10_000_000;
+
 /// BME280 error type.
 #[derive(Debug)]
 pub enum Error<SpiError, PinError> {
