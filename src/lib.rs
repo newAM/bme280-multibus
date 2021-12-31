@@ -61,6 +61,7 @@ pub struct Calibration {
     t2: i16, // 0x8A..0x8B buf[02:03]
     t3: i16, // 0x8C..0x8D buf[04:05]
     p1: u16, // 0x8E..0x8F buf[06:07]
+    #[allow(dead_code)]
     p2: i16, // 0x90..0x91 buf[08:09]
     p3: i16, // 0x92..0x93 buf[10:11]
     p4: i16, // 0x94..0x95 buf[12:13]
