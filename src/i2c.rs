@@ -8,7 +8,7 @@ pub enum Address {
     SdoVddio = 0x77,
 }
 
-/// BME280 device.
+/// BME280 bus.
 #[derive(Debug)]
 pub struct Bme280Bus<I2C> {
     address: u8,
@@ -32,6 +32,7 @@ where
     ///
     /// let mut bme: Bme280Bus<_> = Bme280Bus::new(i2c, Address::SdoGnd);
     /// ```
+    #[inline]
     pub fn new(bus: I2C, address: Address) -> Self {
         Self {
             bus,
@@ -51,6 +52,7 @@ where
     /// let mut bme: Bme280Bus<_> = Bme280Bus::new(i2c, Address::SdoGnd);
     /// let i2c = bme.free();
     /// ```
+    #[inline]
     pub fn free(self) -> I2C {
         self.bus
     }

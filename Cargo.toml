@@ -11,12 +11,9 @@ keywords = ["i2c", "driver", "embedded-hal-driver", "bosch", "bme280"]
 categories = ["embedded", "hardware-support", "no-std"]
 homepage = "https://github.com/newAM/bme280-rs"
 
-[badges]
-maintenance = { status = "experimental" }
-
 [dependencies]
-embedded-hal = "~0.2.4"
+embedded-hal = "0.2.4"
 
 [dev-dependencies]
-embedded-hal-mock = "~0.8.0"
-ftd2xx-embedded-hal = "~0.9.0"
+embedded-hal-mock = "0.8"
+ftd2xx-embedded-hal = "0.9"
