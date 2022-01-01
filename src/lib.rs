@@ -27,7 +27,7 @@
 //!
 //! let mut bme: Bme280<_> = Bme280::from_i2c(i2c, Address::SdoGnd)?;
 //! bme.settings(&SETTINGS)?;
-//! let sample: Sample = bme.sample()?;
+//! let sample: Sample = bme.sample().unwrap();
 //! # Ok::<(), hal::MockError>(())
 //! ```
 #![no_std]
@@ -1184,7 +1184,7 @@ where
     ///
     /// let mut bme: Bme280<_> = Bme280::from_i2c(i2c, Address::SdoGnd)?;
     /// bme.settings(&SETTINGS)?;
-    /// let sample: Sample = bme.sample()?;
+    /// let sample: Sample = bme.sample().unwrap();
     /// # Ok::<(), hal::MockError>(())
     /// ```
     pub fn sample(&mut self) -> Result<Sample, Error<E>> {
