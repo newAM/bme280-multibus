@@ -1,7 +1,7 @@
 [package]
 name = "bme280-multibus"
 version = "0.1.0"
-authors = ["Alex M. <alexmgit@protonmail.com>"]
+authors = ["Alex Martens <alexmgit@protonmail.com>"]
 edition = "2018"
 rust-version = "1.56"  # Update MSRV in CI
 repository = "https://github.com/newAM/bme280-multibus"
