@@ -15,19 +15,19 @@
 //! * Connect Vdd to 3.3V or 5V
 //! * Connect Vss to GND
 
-use bme280::{Bme280, CHIP_ID};
+use bme280_multibus::{Bme280, CHIP_ID};
 use ftd2xx_embedded_hal as hal;
 use hal::OutputPin;
 
-const SETTINGS: bme280::Settings = bme280::Settings {
-    config: bme280::Config::reset()
-        .set_standby_time(bme280::Standby::Millis125)
-        .set_filter(bme280::Filter::X8),
-    ctrl_meas: bme280::CtrlMeas::reset()
-        .set_osrs_t(bme280::Oversampling::X8)
-        .set_osrs_p(bme280::Oversampling::X8)
-        .set_mode(bme280::Mode::Normal),
-    ctrl_hum: bme280::Oversampling::X8,
+const SETTINGS: bme280_multibus::Settings = bme280_multibus::Settings {
+    config: bme280_multibus::Config::reset()
+        .set_standby_time(bme280_multibus::Standby::Millis125)
+        .set_filter(bme280_multibus::Filter::X8),
+    ctrl_meas: bme280_multibus::CtrlMeas::reset()
+        .set_osrs_t(bme280_multibus::Oversampling::X8)
+        .set_osrs_p(bme280_multibus::Oversampling::X8)
+        .set_mode(bme280_multibus::Mode::Normal),
+    ctrl_hum: bme280_multibus::Oversampling::X8,
 };
 
 fn main() {
@@ -52,6 +52,6 @@ fn main() {
 
     std::thread::sleep(std::time::Duration::from_millis(250));
 
-    let sample: bme280::Sample = bme.sample().expect("Failed to sample BME280");
+    let sample: bme280_multibus::Sample = bme.sample().expect("Failed to sample BME280");
     println!("sample = {:#?}", sample);
 }

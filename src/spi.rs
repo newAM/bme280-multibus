@@ -50,7 +50,7 @@ where
     /// # let mut pin = hal::pin::Mock::new(&[
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use bme280::spi::Bme280Bus;
+    /// use bme280_multibus::spi::Bme280Bus;
     /// use embedded_hal::digital::v2::OutputPin;
     ///
     /// pin.set_high()?;
@@ -72,7 +72,7 @@ where
     /// # let mut pin = hal::pin::Mock::new(&[
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use bme280::spi::Bme280Bus;
+    /// use bme280_multibus::spi::Bme280Bus;
     /// use embedded_hal::digital::v2::OutputPin;
     ///
     /// pin.set_high()?;
@@ -157,7 +157,7 @@ pub mod infallible_gpio {
         /// #     fn set_high(&mut self) -> Result<(), Self::Error> { Ok(()) }
         /// # }
         /// # let mut pin = Pin {};
-        /// use bme280::spi::infallible_gpio::Bme280Bus;
+        /// use bme280_multibus::spi::infallible_gpio::Bme280Bus;
         /// use embedded_hal::digital::v2::OutputPin;
         ///
         /// pin.set_high().unwrap();
@@ -183,7 +183,7 @@ pub mod infallible_gpio {
         /// #     fn set_high(&mut self) -> Result<(), Self::Error> { Ok(()) }
         /// # }
         /// # let mut pin = Pin {};
-        /// use bme280::spi::infallible_gpio::Bme280Bus;
+        /// use bme280_multibus::spi::infallible_gpio::Bme280Bus;
         /// use embedded_hal::digital::v2::OutputPin;
         ///
         /// pin.set_high().unwrap();

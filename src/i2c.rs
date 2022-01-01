@@ -28,7 +28,7 @@ where
     /// ```
     /// # use embedded_hal_mock as hal;
     /// # let i2c = hal::i2c::Mock::new(&[]);
-    /// use bme280::i2c::{Address, Bme280Bus};
+    /// use bme280_multibus::i2c::{Address, Bme280Bus};
     ///
     /// let mut bme: Bme280Bus<_> = Bme280Bus::new(i2c, Address::SdoGnd);
     /// ```
@@ -47,7 +47,7 @@ where
     /// ```
     /// # use embedded_hal_mock as hal;
     /// # let i2c = hal::i2c::Mock::new(&[]);
-    /// use bme280::i2c::{Address, Bme280Bus};
+    /// use bme280_multibus::i2c::{Address, Bme280Bus};
     ///
     /// let mut bme: Bme280Bus<_> = Bme280Bus::new(i2c, Address::SdoGnd);
     /// let i2c = bme.free();

@@ -1,29 +1,25 @@
 [![CI](https://github.com/newAM/bme280-rs/workflows/CI/badge.svg)](https://github.com/newAM/bme280-rs/actions)
+[![docs.rs](https://docs.rs/bme280-multibus/badge.svg)](https://docs.rs/bme280-multibus/)
+[![Build Status](https://github.com/newAM/bme280-multibus/workflows/CI/badge.svg)](https://github.com/newAM/bme280-multibus/actions)
 
-# bme280
+# bme280-multibus
 
-Another incomplete BME280 crate.
-
-The BME280 presents some design challenges, it is stateful, and it has
-multiple bus options (3-wire SPI, 4-wire SPI, I2C).
-
-This is just another BME280 driver implementation that I made for my own
-usecases (I2C or SPI + continuous sampling).
+BME280 driver with support for I2C and SPI bus options.
 
 ## Example
 
 ```rust
-use bme280::{i2c::Address, Bme280, Sample, Standby};
+use bme280_multibus::{i2c::Address, Bme280, Sample, Standby};
 
-const SETTINGS: bme280::Settings = bme280::Settings {
-    config: bme280::Config::reset()
-        .set_standby_time(bme280::Standby::Millis1000)
-        .set_filter(bme280::Filter::X16),
-    ctrl_meas: bme280::CtrlMeas::reset()
-        .set_osrs_t(bme280::Oversampling::X8)
-        .set_osrs_p(bme280::Oversampling::X8)
-        .set_mode(bme280::Mode::Normal),
-    ctrl_hum: bme280::Oversampling::X8,
+const SETTINGS: bme280_multibus::Settings = bme280_multibus::Settings {
+    config: bme280_multibus::Config::reset()
+        .set_standby_time(bme280_multibus::Standby::Millis1000)
+        .set_filter(bme280_multibus::Filter::X16),
+    ctrl_meas: bme280_multibus::CtrlMeas::reset()
+        .set_osrs_t(bme280_multibus::Oversampling::X8)
+        .set_osrs_p(bme280_multibus::Oversampling::X8)
+        .set_mode(bme280_multibus::Mode::Normal),
+    ctrl_hum: bme280_multibus::Oversampling::X8,
 };
 
 let mut bme: Bme280<_> = Bme280::from_i2c(i2c, Address::SdoGnd)?;
