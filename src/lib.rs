@@ -826,6 +826,21 @@ pub struct Sample {
     pub humidity: f32,
 }
 
+/// Sampling error.
+#[derive(Debug, PartialEq, Eq)]
+pub enum Error<B> {
+    /// Bus error.
+    Bus(B),
+    /// Sample error.
+    ///
+    /// This is returned when the sample registers hold the reset value.
+    /// This may indicate:
+    /// * The power-on-time delay was not observed.
+    /// * [`Oversampling::Skip`] was used for humidity, temperature, or pressure.
+    /// * The BME280 was not configured.
+    Sample,
+}
+
 /// BME280 bus, I2C or SPI.
 pub trait Bme280Bus {
     /// BME280 bus error.
@@ -1142,11 +1157,6 @@ where
 
     /// Read a sample from the BME280.
     ///
-    /// # Panics
-    ///
-    /// Panics in debug builds if the sample registers are in their reset
-    /// values.
-    ///
     /// # Example
     ///
     /// ```
@@ -1177,7 +1187,7 @@ where
     /// let sample: Sample = bme.sample()?;
     /// # Ok::<(), hal::MockError>(())
     /// ```
-    pub fn sample(&mut self) -> Result<Sample, E> {
+    pub fn sample(&mut self) -> Result<Sample, Error<E>> {
         // The magical math and magical numbers come from the datasheet.
         // I am not to blame for this.
 
@@ -1196,10 +1206,9 @@ where
         // lsb [7:0] = h[7:0]
         let h: u32 = ((buf[6] as u32) << 8) | (buf[7] as u32);
 
-        // output is held in reset
-        debug_assert_ne!(t, 0x80000000);
-        debug_assert_ne!(p, 0x80000000);
-        debug_assert_ne!(h, 0x8000);
+        if t == 0x80000000 || p == 0x80000000 || h == 0x8000 {
+            return Err(Error::Sample);
+        }
 
         let p: i32 = p as i32;
         let t: i32 = t as i32;
