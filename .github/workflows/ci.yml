@@ -69,6 +69,9 @@ jobs:
   doc:
     name: doc
     runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: "-D warnings"
+      RUSTDOCFLAGS: "-D warnings"
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
