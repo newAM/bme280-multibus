@@ -1,18 +1,19 @@
 [package]
-name = "bme280"
+name = "bme280-multibus"
 version = "0.1.0"
 authors = ["Alex M. <alexmgit@protonmail.com>"]
 edition = "2018"
-repository = "https://github.com/newAM/bme280-rs"
+rust-version = "1.56"  # Update MSRV in CI
+repository = "https://github.com/newAM/bme280-multibus"
 license = "MIT"
-description = "Driver for the Bosch BME280."
+description = "BME280 driver with support for SPI and I2C"
 readme = "README.md"
 keywords = ["i2c", "driver", "embedded-hal-driver", "bosch", "bme280"]
 categories = ["embedded", "hardware-support", "no-std"]
-homepage = "https://github.com/newAM/bme280-rs"
+homepage = "https://github.com/newAM/bme280-multibus"
 
 [dependencies]
-embedded-hal = "0.2.4"
+embedded-hal = "0.2"
 
 [dev-dependencies]
 embedded-hal-mock = "0.8"

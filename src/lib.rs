@@ -1,10 +1,4 @@
-//! Another incomplete BME280 crate.
-//!
-//! The BME280 presents some design challenges, it is stateful, and it has
-//! multiple bus options (3-wire SPI, 4-wire SPI, I2C).
-//!
-//! This is just another BME280 driver implementation that I made for my own
-//! usecases (I2C or SPI + continuous sampling).
+//! BME280 driver with support for I2C and SPI bus options.
 //!
 //! # Example
 //!
@@ -18,17 +12,17 @@
 //! #   hal::i2c::Transaction::write(0x76, vec![0xF5, 0b10110000]),
 //! #   hal::i2c::Transaction::write_read(0x76, vec![0xF7], vec![0; 8]),
 //! # ]);
-//! use bme280::{i2c::Address, Bme280, Sample, Standby};
+//! use bme280_multibus::{i2c::Address, Bme280, Sample, Standby};
 //!
-//! const SETTINGS: bme280::Settings = bme280::Settings {
-//!     config: bme280::Config::reset()
-//!         .set_standby_time(bme280::Standby::Millis1000)
-//!         .set_filter(bme280::Filter::X16),
-//!     ctrl_meas: bme280::CtrlMeas::reset()
-//!         .set_osrs_t(bme280::Oversampling::X8)
-//!         .set_osrs_p(bme280::Oversampling::X8)
-//!         .set_mode(bme280::Mode::Normal),
-//!     ctrl_hum: bme280::Oversampling::X8,
+//! const SETTINGS: bme280_multibus::Settings = bme280_multibus::Settings {
+//!     config: bme280_multibus::Config::reset()
+//!         .set_standby_time(bme280_multibus::Standby::Millis1000)
+//!         .set_filter(bme280_multibus::Filter::X16),
+//!     ctrl_meas: bme280_multibus::CtrlMeas::reset()
+//!         .set_osrs_t(bme280_multibus::Oversampling::X8)
+//!         .set_osrs_p(bme280_multibus::Oversampling::X8)
+//!         .set_mode(bme280_multibus::Mode::Normal),
+//!     ctrl_hum: bme280_multibus::Oversampling::X8,
 //! };
 //!
 //! let mut bme: Bme280<_> = Bme280::from_i2c(i2c, Address::SdoGnd)?;
@@ -38,7 +32,7 @@
 //! ```
 #![no_std]
 #![forbid(unsafe_code)]
-#![deny(missing_docs)]
+#![warn(missing_docs)]
 
 use core::time::Duration;
 
@@ -197,7 +191,7 @@ impl Oversampling {
     /// # Example
     ///
     /// ```
-    /// use bme280::Oversampling;
+    /// use bme280_multibus::Oversampling;
     ///
     /// assert_eq!(Oversampling::reset(), Oversampling::Skip);
     /// ```
@@ -236,7 +230,7 @@ impl Mode {
     /// # Example
     ///
     /// ```
-    /// use bme280::Mode;
+    /// use bme280_multibus::Mode;
     ///
     /// assert_eq!(Mode::reset(), Mode::Sleep);
     /// ```
@@ -279,7 +273,7 @@ impl Standby {
     /// # Example
     ///
     /// ```
-    /// use bme280::Standby;
+    /// use bme280_multibus::Standby;
     ///
     /// assert_eq!(Standby::reset(), Standby::Micros500);
     /// ```
@@ -292,7 +286,7 @@ impl Standby {
     /// # Example
     ///
     /// ```
-    /// use bme280::Standby;
+    /// use bme280_multibus::Standby;
     /// use core::time::Duration;
     ///
     /// assert_eq!(Standby::Micros500.duration(), Duration::from_micros(500));
@@ -373,7 +367,7 @@ impl Filter {
     /// # Example
     ///
     /// ```
-    /// use bme280::Filter;
+    /// use bme280_multibus::Filter;
     ///
     /// assert_eq!(Filter::reset(), Filter::Off);
     /// ```
@@ -406,7 +400,7 @@ impl From<Filter> for u8 {
 /// # Example
 ///
 /// ```
-/// use bme280::{Config, Filter, Standby};
+/// use bme280_multibus::{Config, Filter, Standby};
 ///
 /// const CONFIG: Config = Config::reset()
 ///     .set_standby_time(Standby::Millis1000)
@@ -422,7 +416,7 @@ impl Config {
     /// # Example
     ///
     /// ```
-    /// use bme280::Config;
+    /// use bme280_multibus::Config;
     ///
     /// assert_eq!(Config::reset(), Config::default());
     /// ```
@@ -439,7 +433,7 @@ impl Config {
     /// # Example
     ///
     /// ```
-    /// use bme280::{Config, Standby};
+    /// use bme280_multibus::{Config, Standby};
     ///
     /// let mut cfg: Config = Config::default();
     /// assert_eq!(cfg.standby_time(), Standby::default());
@@ -489,7 +483,7 @@ impl Config {
     /// # Example
     ///
     /// ```
-    /// use bme280::{Config, Filter};
+    /// use bme280_multibus::{Config, Filter};
     ///
     /// let mut cfg: Config = Config::default();
     /// assert_eq!(cfg.filter(), Filter::default());
@@ -529,7 +523,7 @@ impl Config {
     /// # Example
     ///
     /// ```
-    /// use bme280::Config;
+    /// use bme280_multibus::Config;
     ///
     /// let mut cfg: Config = Config::default();
     /// assert_eq!(cfg.spi3w_en(), false);
@@ -574,7 +568,7 @@ impl CtrlMeas {
     /// # Example
     ///
     /// ```
-    /// use bme280::CtrlMeas;
+    /// use bme280_multibus::CtrlMeas;
     ///
     /// assert_eq!(CtrlMeas::reset(), CtrlMeas::default());
     /// ```
@@ -591,7 +585,7 @@ impl CtrlMeas {
     /// # Example
     ///
     /// ```
-    /// use bme280::{CtrlMeas, Oversampling};
+    /// use bme280_multibus::{CtrlMeas, Oversampling};
     ///
     /// let mut ctrl_meas: CtrlMeas = CtrlMeas::default();
     /// assert_eq!(ctrl_meas.osrs_t(), Oversampling::default());
@@ -635,7 +629,7 @@ impl CtrlMeas {
     /// # Example
     ///
     /// ```
-    /// use bme280::{CtrlMeas, Oversampling};
+    /// use bme280_multibus::{CtrlMeas, Oversampling};
     ///
     /// let mut ctrl_meas: CtrlMeas = CtrlMeas::default();
     /// assert_eq!(ctrl_meas.osrs_p(), Oversampling::default());
@@ -678,7 +672,7 @@ impl CtrlMeas {
     /// # Example
     ///
     /// ```
-    /// use bme280::{CtrlMeas, Mode};
+    /// use bme280_multibus::{CtrlMeas, Mode};
     ///
     /// let mut ctrl_meas: CtrlMeas = CtrlMeas::default();
     /// assert_eq!(ctrl_meas.mode(), Mode::default());
@@ -722,7 +716,7 @@ impl Status {
     /// # Example
     ///
     /// ```
-    /// use bme280::Status;
+    /// use bme280_multibus::Status;
     ///
     /// assert_eq!(Status::reset(), Status::default());
     /// ```
@@ -739,7 +733,7 @@ impl Status {
     /// # Example
     ///
     /// ```
-    /// assert!(!bme280::Status::reset().measuring());
+    /// assert!(!bme280_multibus::Status::reset().measuring());
     /// ```
     pub const fn measuring(&self) -> bool {
         self.0 & (1 << 3) != 0
@@ -754,7 +748,7 @@ impl Status {
     /// # Example
     ///
     /// ```
-    /// assert!(!bme280::Status::reset().im_update());
+    /// assert!(!bme280_multibus::Status::reset().im_update());
     /// ```
     pub const fn im_update(&self) -> bool {
         self.0 & 1 != 0
@@ -793,7 +787,7 @@ impl Settings {
     /// # Example
     ///
     /// ```
-    /// use bme280::{Config, CtrlMeas, Filter, Mode, Oversampling, Settings, Standby};
+    /// use bme280_multibus::{Config, CtrlMeas, Filter, Mode, Oversampling, Settings, Standby};
     ///
     /// const SETTINGS: Settings = Settings {
     ///     config: Config::reset()
@@ -949,7 +943,7 @@ where
     /// #   hal::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
     /// #   hal::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
     /// # ]);
-    /// use bme280::{i2c::Address, Bme280};
+    /// use bme280_multibus::{i2c::Address, Bme280};
     ///
     /// let mut bme: Bme280<_> = Bme280::from_i2c(i2c, Address::SdoGnd)?;
     /// # Ok::<(), hal::MockError>(())
@@ -990,12 +984,12 @@ where
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use bme280::Bme280;
+    /// use bme280_multibus::Bme280;
     /// use embedded_hal::digital::v2::OutputPin;
     ///
     /// pin.set_high()?;
     /// let mut bme: Bme280<_> = Bme280::from_spi(spi, pin)?;
-    /// # Ok::<(), bme280::spi::Error<hal::MockError, hal::MockError>>(())
+    /// # Ok::<(), bme280_multibus::spi::Error<hal::MockError, hal::MockError>>(())
     /// ```
     pub fn from_spi(spi: SPI, cs: CS) -> Result<Self, crate::spi::Error<SpiError, PinError>> {
         let bus = crate::spi::Bme280Bus::new(spi, cs);
@@ -1018,7 +1012,7 @@ where
     /// #   hal::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
     /// #   hal::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
     /// # ]);
-    /// use bme280::{
+    /// use bme280_multibus::{
     ///     i2c::{Address, Bme280Bus},
     ///     Bme280,
     /// };
@@ -1048,7 +1042,7 @@ where
     /// #   hal::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
     /// #   hal::i2c::Transaction::write_read(0x76, vec![0xD0], vec![0x60]),
     /// # ]);
-    /// use bme280::{i2c::Address, Bme280, CHIP_ID};
+    /// use bme280_multibus::{i2c::Address, Bme280, CHIP_ID};
     ///
     /// let mut bme: Bme280<_> = Bme280::from_i2c(i2c, Address::SdoGnd)?;
     /// let chip_id: u8 = bme.chip_id()?;
@@ -1072,7 +1066,7 @@ where
     /// #   hal::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
     /// #   hal::i2c::Transaction::write(0x76, vec![0xE0, 0xB6]),
     /// # ]);
-    /// use bme280::{i2c::Address, Bme280};
+    /// use bme280_multibus::{i2c::Address, Bme280};
     ///
     /// let mut bme: Bme280<_> = Bme280::from_i2c(i2c, Address::SdoGnd)?;
     /// bme.reset()?;
@@ -1096,7 +1090,7 @@ where
     /// #   hal::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
     /// #   hal::i2c::Transaction::write_read(0x76, vec![0xF3], vec![0]),
     /// # ]);
-    /// use bme280::{i2c::Address, Bme280, Status};
+    /// use bme280_multibus::{i2c::Address, Bme280, Status};
     ///
     /// let mut bme: Bme280<_> = Bme280::from_i2c(i2c, Address::SdoGnd)?;
     /// let status: Status = bme.status()?;
@@ -1121,7 +1115,7 @@ where
     /// #   hal::i2c::Transaction::write(0x76, vec![0xF4, 0b10010011]),
     /// #   hal::i2c::Transaction::write(0x76, vec![0xF5, 0b10110000]),
     /// # ]);
-    /// use bme280::{
+    /// use bme280_multibus::{
     ///     i2c::Address, Bme280, Config, CtrlMeas, Filter, Mode, Oversampling, Settings, Standby,
     /// };
     ///
@@ -1165,17 +1159,17 @@ where
     /// #   hal::i2c::Transaction::write(0x76, vec![0xF5, 0b10110000]),
     /// #   hal::i2c::Transaction::write_read(0x76, vec![0xF7], vec![0; 8]),
     /// # ]);
-    /// use bme280::{i2c::Address, Bme280, Sample, Standby};
+    /// use bme280_multibus::{i2c::Address, Bme280, Sample, Standby};
     ///
-    /// const SETTINGS: bme280::Settings = bme280::Settings {
-    ///     config: bme280::Config::reset()
-    ///         .set_standby_time(bme280::Standby::Millis1000)
-    ///         .set_filter(bme280::Filter::X16),
-    ///     ctrl_meas: bme280::CtrlMeas::reset()
-    ///         .set_osrs_t(bme280::Oversampling::X8)
-    ///         .set_osrs_p(bme280::Oversampling::X8)
-    ///         .set_mode(bme280::Mode::Normal),
-    ///     ctrl_hum: bme280::Oversampling::X8,
+    /// const SETTINGS: bme280_multibus::Settings = bme280_multibus::Settings {
+    ///     config: bme280_multibus::Config::reset()
+    ///         .set_standby_time(bme280_multibus::Standby::Millis1000)
+    ///         .set_filter(bme280_multibus::Filter::X16),
+    ///     ctrl_meas: bme280_multibus::CtrlMeas::reset()
+    ///         .set_osrs_t(bme280_multibus::Oversampling::X8)
+    ///         .set_osrs_p(bme280_multibus::Oversampling::X8)
+    ///         .set_mode(bme280_multibus::Mode::Normal),
+    ///     ctrl_hum: bme280_multibus::Oversampling::X8,
     /// };
     ///
     /// let mut bme: Bme280<_> = Bme280::from_i2c(i2c, Address::SdoGnd)?;
