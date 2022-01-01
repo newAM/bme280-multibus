@@ -1192,7 +1192,9 @@ where
         // I am not to blame for this.
 
         let mut buf: [u8; NUM_MEAS_REG] = [0; NUM_MEAS_REG];
-        self.bus.read_regs(reg::PRESS_MSB, &mut buf)?;
+        self.bus
+            .read_regs(reg::PRESS_MSB, &mut buf)
+            .map_err(Error::Bus)?;
 
         // msb [7:0] = p[19:12]
         // lsb [7:0] = p[11:4]
