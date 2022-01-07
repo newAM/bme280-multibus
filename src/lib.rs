@@ -820,7 +820,7 @@ impl Default for Settings {
 pub struct Sample {
     /// Temperature reading in celsius.
     pub temperature: f32,
-    /// Pressure reading in kilo-pascals.
+    /// Pressure reading in pascal.
     pub pressure: f32,
     /// Humidity in perfect relative.
     pub humidity: f32,
