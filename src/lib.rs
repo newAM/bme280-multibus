@@ -817,6 +817,7 @@ impl Default for Settings {
 
 /// A sensor sample from the BME280.
 #[derive(Debug, Clone, Copy)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Sample {
     /// Temperature reading in celsius.
     pub temperature: f32,

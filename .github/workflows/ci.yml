@@ -31,6 +31,7 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           target: ${{ matrix.target }}
           override: true
+      - run: cargo build --target ${{ matrix.target }}
       - run: cargo build --target ${{ matrix.target }} --all-features
 
   test:
