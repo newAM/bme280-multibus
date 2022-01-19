@@ -18,4 +18,5 @@ serde = { version = "1", features = ["derive"], default-features = false, option
 
 [dev-dependencies]
 embedded-hal-mock = "0.8"
-ftd2xx-embedded-hal = "0.9"
+ftdi-embedded-hal = { version = "0.11", features = ["libftd2xx"] }
+libftd2xx = "0.32"

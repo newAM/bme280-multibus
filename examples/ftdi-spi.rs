@@ -16,8 +16,8 @@
 //! * Connect Vss to GND
 
 use bme280_multibus::{Bme280, CHIP_ID};
-use ftd2xx_embedded_hal as hal;
-use hal::OutputPin;
+use ftdi_embedded_hal::{FtHal, OutputPin, Spi};
+use libftd2xx::Ft232h;
 
 const SETTINGS: bme280_multibus::Settings = bme280_multibus::Settings {
     config: bme280_multibus::Config::reset()
@@ -31,12 +31,11 @@ const SETTINGS: bme280_multibus::Settings = bme280_multibus::Settings {
 };
 
 fn main() {
-    let ftdi = hal::Ft232hHal::new()
-        .expect("Failed to open FT232H device")
-        .init_default()
-        .expect("Failed to initialize MPSSE");
-    let spi: hal::Spi<_> = ftdi.spi().expect("Failed to initialize SPI");
-    let cs: OutputPin<_> = ftdi.ad3();
+    let device: Ft232h = libftd2xx::Ftdi::new().unwrap().try_into().unwrap();
+    let hal_dev: FtHal<Ft232h> = FtHal::init_default(device).unwrap();
+
+    let spi: Spi<Ft232h> = hal_dev.spi().unwrap();
+    let cs: OutputPin<Ft232h> = hal_dev.ad3().unwrap();
 
     let mut bme: Bme280<_> = Bme280::from_spi(spi, cs).expect("Failed to initialize BME280");
     bme.reset().expect("Failed to reset");
