@@ -8,7 +8,8 @@
 //! * https://www.adafruit.com/product/4472
 
 use bme280_multibus::{Bme280, CHIP_ID};
-use ftd2xx_embedded_hal as hal;
+use ftdi_embedded_hal::{FtHal, I2c};
+use libftd2xx::Ft232h;
 
 const SETTINGS: bme280_multibus::Settings = bme280_multibus::Settings {
     config: bme280_multibus::Config::reset()
@@ -22,11 +23,10 @@ const SETTINGS: bme280_multibus::Settings = bme280_multibus::Settings {
 };
 
 fn main() {
-    let ftdi = hal::Ft232hHal::new()
-        .expect("Failed to open FT232H device")
-        .init_default()
-        .expect("Failed to initialize MPSSE");
-    let i2c: hal::I2c<_> = ftdi.i2c().expect("Failed to initialize I2C");
+    let device: Ft232h = libftd2xx::Ftdi::new().unwrap().try_into().unwrap();
+    let hal_dev: FtHal<Ft232h> = FtHal::init_default(device).unwrap();
+
+    let i2c: I2c<Ft232h> = hal_dev.i2c().unwrap();
 
     let mut bme: Bme280<_> = Bme280::from_i2c(i2c, bme280_multibus::i2c::Address::SdoVddio)
         .expect("Failed to initialize BME280");
