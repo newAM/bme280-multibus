@@ -16,8 +16,10 @@
 //! * Connect Vss to GND
 
 use bme280_multibus::{Bme280, CHIP_ID};
-use ftdi_embedded_hal::{FtHal, OutputPin, Spi};
-use libftd2xx::Ft232h;
+use ftdi_embedded_hal::{
+    libftd2xx::{self, Ft232h},
+    FtHal, OutputPin, Spi,
+};
 
 const SETTINGS: bme280_multibus::Settings = bme280_multibus::Settings {
     config: bme280_multibus::Config::reset()

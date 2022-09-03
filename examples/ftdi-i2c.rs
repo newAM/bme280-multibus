@@ -8,8 +8,10 @@
 //! * https://www.adafruit.com/product/4472
 
 use bme280_multibus::{Bme280, CHIP_ID};
-use ftdi_embedded_hal::{FtHal, I2c};
-use libftd2xx::Ft232h;
+use ftdi_embedded_hal::{
+    libftd2xx::{self, Ft232h},
+    FtHal, I2c,
+};
 
 const SETTINGS: bme280_multibus::Settings = bme280_multibus::Settings {
     config: bme280_multibus::Config::reset()
