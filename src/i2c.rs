@@ -17,8 +17,7 @@ pub struct Bme280Bus<I2C> {
 
 impl<I2C, E> Bme280Bus<I2C>
 where
-    I2C: embedded_hal::blocking::i2c::Write<Error = E>
-        + embedded_hal::blocking::i2c::WriteRead<Error = E>,
+    I2C: eh0::blocking::i2c::Write<Error = E> + eh0::blocking::i2c::WriteRead<Error = E>,
 {
     /// Creates a new `Bme280Bus` from a I2C peripheral, and an I2C
     /// device address.
@@ -26,8 +25,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
-    /// # let i2c = hal::i2c::Mock::new(&[]);
+    /// # let i2c = ehm0::i2c::Mock::new(&[]);
     /// use bme280_multibus::i2c::{Address, Bme280Bus};
     ///
     /// let mut bme: Bme280Bus<_> = Bme280Bus::new(i2c, Address::SdoGnd);
@@ -45,8 +43,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
-    /// # let i2c = hal::i2c::Mock::new(&[]);
+    /// # let i2c = ehm0::i2c::Mock::new(&[]);
     /// use bme280_multibus::i2c::{Address, Bme280Bus};
     ///
     /// let mut bme: Bme280Bus<_> = Bme280Bus::new(i2c, Address::SdoGnd);
@@ -60,8 +57,7 @@ where
 
 impl<I2C, E> crate::Bme280Bus for Bme280Bus<I2C>
 where
-    I2C: embedded_hal::blocking::i2c::Write<Error = E>
-        + embedded_hal::blocking::i2c::WriteRead<Error = E>,
+    I2C: eh0::blocking::i2c::Write<Error = E> + eh0::blocking::i2c::WriteRead<Error = E>,
 {
     type Error = E;
 

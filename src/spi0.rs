@@ -8,7 +8,7 @@ pub struct Bme280Bus<SPI, CS> {
 /// SPI mode for the BME280.
 ///
 /// The BME280 also supports mode 3.
-pub const MODE: embedded_hal::spi::Mode = embedded_hal::spi::MODE_0;
+pub const MODE: eh0::spi::Mode = eh0::spi::MODE_0;
 
 /// Maximum SPI bus frequency in hertz.
 pub const MAX_FREQ: u32 = 10_000_000;
@@ -31,9 +31,9 @@ impl<SpiError, PinError> From<PinError> for Error<SpiError, PinError> {
 
 impl<SPI, CS, SpiError, PinError> Bme280Bus<SPI, CS>
 where
-    SPI: embedded_hal::blocking::spi::Transfer<u8, Error = SpiError>
-        + embedded_hal::blocking::spi::Write<u8, Error = SpiError>,
-    CS: embedded_hal::digital::v2::OutputPin<Error = PinError>,
+    SPI: eh0::blocking::spi::Transfer<u8, Error = SpiError>
+        + eh0::blocking::spi::Write<u8, Error = SpiError>,
+    CS: eh0::digital::v2::OutputPin<Error = PinError>,
 {
     /// Creates a new `Bme280Bus` from a SPI peripheral and a chip select
     /// digital I/O pin.
@@ -45,17 +45,16 @@ where
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
-    /// # let spi = hal::spi::Mock::new(&[]);
-    /// # let mut pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
+    /// # let spi = ehm0::spi::Mock::new(&[]);
+    /// # let mut pin = ehm0::pin::Mock::new(&[
+    /// #    ehm0::pin::Transaction::set(ehm0::pin::State::High),
     /// # ]);
-    /// use bme280_multibus::spi::Bme280Bus;
-    /// use embedded_hal::digital::v2::OutputPin;
+    /// use bme280_multibus::spi0::Bme280Bus;
+    /// use eh0::digital::v2::OutputPin;
     ///
     /// pin.set_high()?;
     /// let mut bme: Bme280Bus<_, _> = Bme280Bus::new(spi, pin);
-    /// # Ok::<(), hal::MockError>(())
+    /// # Ok::<(), ehm0::MockError>(())
     /// ```
     #[inline]
     pub fn new(bus: SPI, cs: CS) -> Self {
@@ -67,18 +66,17 @@ where
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
-    /// # let spi = hal::spi::Mock::new(&[]);
-    /// # let mut pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
+    /// # let spi = ehm0::spi::Mock::new(&[]);
+    /// # let mut pin = ehm0::pin::Mock::new(&[
+    /// #    ehm0::pin::Transaction::set(ehm0::pin::State::High),
     /// # ]);
-    /// use bme280_multibus::spi::Bme280Bus;
-    /// use embedded_hal::digital::v2::OutputPin;
+    /// use bme280_multibus::spi0::Bme280Bus;
+    /// use eh0::digital::v2::OutputPin;
     ///
     /// pin.set_high()?;
     /// let mut bme: Bme280Bus<_, _> = Bme280Bus::new(spi, pin);
     /// let (spi, pin) = bme.free();
-    /// # Ok::<(), hal::MockError>(())
+    /// # Ok::<(), ehm0::MockError>(())
     /// ```
     #[inline]
     pub fn free(self) -> (SPI, CS) {
@@ -100,9 +98,9 @@ where
 
 impl<SPI, CS, SpiError, PinError> crate::Bme280Bus for Bme280Bus<SPI, CS>
 where
-    SPI: embedded_hal::blocking::spi::Transfer<u8, Error = SpiError>
-        + embedded_hal::blocking::spi::Write<u8, Error = SpiError>,
-    CS: embedded_hal::digital::v2::OutputPin<Error = PinError>,
+    SPI: eh0::blocking::spi::Transfer<u8, Error = SpiError>
+        + eh0::blocking::spi::Write<u8, Error = SpiError>,
+    CS: eh0::digital::v2::OutputPin<Error = PinError>,
 {
     type Error = Error<SpiError, PinError>;
 
@@ -134,9 +132,8 @@ pub mod infallible_gpio {
 
     impl<SPI, CS, E> Bme280Bus<SPI, CS>
     where
-        SPI: embedded_hal::blocking::spi::Transfer<u8, Error = E>
-            + embedded_hal::blocking::spi::Write<u8, Error = E>,
-        CS: embedded_hal::digital::v2::OutputPin<Error = core::convert::Infallible>,
+        SPI: eh0::blocking::spi::Transfer<u8, Error = E> + eh0::blocking::spi::Write<u8, Error = E>,
+        CS: eh0::digital::v2::OutputPin<Error = core::convert::Infallible>,
     {
         /// Creates a new `Bme280Bus` from a SPI peripheral and a chip select
         /// digital I/O pin.
@@ -148,21 +145,20 @@ pub mod infallible_gpio {
         /// # Example
         ///
         /// ```
-        /// # use embedded_hal_mock as hal;
-        /// # let spi = hal::spi::Mock::new(&[]);
+        /// # let spi = ehm0::spi::Mock::new(&[]);
         /// # struct Pin {};
-        /// # impl embedded_hal::digital::v2::OutputPin for Pin {
+        /// # impl eh0::digital::v2::OutputPin for Pin {
         /// #     type Error = core::convert::Infallible;
         /// #     fn set_low(&mut self) -> Result<(), Self::Error> { Ok(()) }
         /// #     fn set_high(&mut self) -> Result<(), Self::Error> { Ok(()) }
         /// # }
         /// # let mut pin = Pin {};
-        /// use bme280_multibus::spi::infallible_gpio::Bme280Bus;
-        /// use embedded_hal::digital::v2::OutputPin;
+        /// use bme280_multibus::spi0::infallible_gpio::Bme280Bus;
+        /// use eh0::digital::v2::OutputPin;
         ///
         /// pin.set_high().unwrap();
         /// let mut bme: Bme280Bus<_, _> = Bme280Bus::new(spi, pin);
-        /// # Ok::<(), hal::MockError>(())
+        /// # Ok::<(), ehm0::MockError>(())
         /// ```
         #[inline]
         pub fn new(bus: SPI, cs: CS) -> Self {
@@ -174,22 +170,21 @@ pub mod infallible_gpio {
         /// # Example
         ///
         /// ```
-        /// # use embedded_hal_mock as hal;
-        /// # let spi = hal::spi::Mock::new(&[]);
+        /// # let spi = ehm0::spi::Mock::new(&[]);
         /// # struct Pin {};
-        /// # impl embedded_hal::digital::v2::OutputPin for Pin {
+        /// # impl eh0::digital::v2::OutputPin for Pin {
         /// #     type Error = core::convert::Infallible;
         /// #     fn set_low(&mut self) -> Result<(), Self::Error> { Ok(()) }
         /// #     fn set_high(&mut self) -> Result<(), Self::Error> { Ok(()) }
         /// # }
         /// # let mut pin = Pin {};
-        /// use bme280_multibus::spi::infallible_gpio::Bme280Bus;
-        /// use embedded_hal::digital::v2::OutputPin;
+        /// use bme280_multibus::spi0::infallible_gpio::Bme280Bus;
+        /// use eh0::digital::v2::OutputPin;
         ///
         /// pin.set_high().unwrap();
         /// let mut bme: Bme280Bus<_, _> = Bme280Bus::new(spi, pin);
         /// let (spi, pin) = bme.free();
-        /// # Ok::<(), hal::MockError>(())
+        /// # Ok::<(), ehm0::MockError>(())
         /// ```
         #[inline]
         pub fn free(self) -> (SPI, CS) {
@@ -210,9 +205,8 @@ pub mod infallible_gpio {
 
     impl<SPI, CS, E> crate::Bme280Bus for Bme280Bus<SPI, CS>
     where
-        SPI: embedded_hal::blocking::spi::Transfer<u8, Error = E>
-            + embedded_hal::blocking::spi::Write<u8, Error = E>,
-        CS: embedded_hal::digital::v2::OutputPin<Error = core::convert::Infallible>,
+        SPI: eh0::blocking::spi::Transfer<u8, Error = E> + eh0::blocking::spi::Write<u8, Error = E>,
+        CS: eh0::digital::v2::OutputPin<Error = core::convert::Infallible>,
     {
         type Error = E;
 

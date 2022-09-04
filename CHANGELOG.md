@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- Added SPI implementations for embedded-hal version 1.0.0-alpha.8.
+
+### Changed
+- Renamed the `spi` module to `spi0`.
+- Renamed `Bme280::from_spi` to `Bme280::from_spi0`.
+- Moved `bme280_multibus::spi::MAX_FREQ` to `bme280_multibus::SPI_MAX_FREQ`.
+
 ## [0.2.2] - 2022-08-13
 ### Fixed
 - Fixed sign extension of the h4 and h5 calibration value, thanks @mbuesch.
