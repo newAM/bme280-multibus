@@ -39,7 +39,7 @@ fn main() {
     let spi: Spi<Ft232h> = hal_dev.spi().unwrap();
     let cs: OutputPin<Ft232h> = hal_dev.ad3().unwrap();
 
-    let mut bme: Bme280<_> = Bme280::from_spi(spi, cs).expect("Failed to initialize BME280");
+    let mut bme: Bme280<_> = Bme280::from_spi0(spi, cs).expect("Failed to initialize BME280");
     bme.reset().expect("Failed to reset");
 
     std::thread::sleep(std::time::Duration::from_millis(2));

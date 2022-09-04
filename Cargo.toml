@@ -10,12 +10,13 @@ description = "BME280 driver with support for SPI and I2C"
 readme = "README.md"
 keywords = ["i2c", "driver", "embedded-hal-driver", "bosch", "bme280"]
 categories = ["embedded", "hardware-support", "no-std"]
-homepage = "https://github.com/newAM/bme280-multibus"
 
 [dependencies]
-embedded-hal = "0.2"
+eh0 = { package = "embedded-hal", version = "0.2.7" }
+eh1 = { package = "embedded-hal", version = "1.0.0-alpha.8" }
 serde = { version = "1", features = ["derive"], default-features = false, optional = true }
 
 [dev-dependencies]
-embedded-hal-mock = "0.8"
+ehm0 = { package = "embedded-hal-mock", version = "0.8" }
+ehm1 = { package = "embedded-hal-mock", git = "https://github.com/dbrgn/embedded-hal-mock", branch = "1-alpha" }
 ftdi-embedded-hal = { version = "0.12", features = ["libftd2xx"] }
