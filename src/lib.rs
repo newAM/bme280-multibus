@@ -14,10 +14,10 @@
 //! use bme280_multibus::{i2c::Address, Bme280, Sample, Standby};
 //!
 //! const SETTINGS: bme280_multibus::Settings = bme280_multibus::Settings {
-//!     config: bme280_multibus::Config::reset()
+//!     config: bme280_multibus::Config::RESET
 //!         .set_standby_time(bme280_multibus::Standby::Millis1000)
 //!         .set_filter(bme280_multibus::Filter::X16),
-//!     ctrl_meas: bme280_multibus::CtrlMeas::reset()
+//!     ctrl_meas: bme280_multibus::CtrlMeas::RESET
 //!         .set_osrs_t(bme280_multibus::Oversampling::X8)
 //!         .set_osrs_p(bme280_multibus::Oversampling::X8)
 //!         .set_mode(bme280_multibus::Mode::Normal),
@@ -197,16 +197,14 @@ impl Oversampling {
     /// ```
     /// use bme280_multibus::Oversampling;
     ///
-    /// assert_eq!(Oversampling::reset(), Oversampling::Skip);
+    /// assert_eq!(Oversampling::RESET, Oversampling::Skip);
     /// ```
-    pub const fn reset() -> Oversampling {
-        Oversampling::Skip
-    }
+    pub const RESET: Self = Self::Skip;
 }
 
 impl Default for Oversampling {
     fn default() -> Self {
-        Oversampling::reset()
+        Oversampling::RESET
     }
 }
 
@@ -236,16 +234,14 @@ impl Mode {
     /// ```
     /// use bme280_multibus::Mode;
     ///
-    /// assert_eq!(Mode::reset(), Mode::Sleep);
+    /// assert_eq!(Mode::RESET, Mode::Sleep);
     /// ```
-    pub const fn reset() -> Mode {
-        Mode::Sleep
-    }
+    pub const RESET: Self = Mode::Sleep;
 }
 
 impl Default for Mode {
     fn default() -> Self {
-        Mode::reset()
+        Mode::RESET
     }
 }
 
@@ -279,11 +275,9 @@ impl Standby {
     /// ```
     /// use bme280_multibus::Standby;
     ///
-    /// assert_eq!(Standby::reset(), Standby::Micros500);
+    /// assert_eq!(Standby::RESET, Standby::Micros500);
     /// ```
-    pub const fn reset() -> Standby {
-        Standby::Micros500
-    }
+    pub const RESET: Self = Standby::Micros500;
 
     /// Convert the standby enumeration to a duration.
     ///
@@ -345,7 +339,7 @@ impl Ord for Standby {
 
 impl Default for Standby {
     fn default() -> Self {
-        Standby::reset()
+        Standby::RESET
     }
 }
 
@@ -373,16 +367,14 @@ impl Filter {
     /// ```
     /// use bme280_multibus::Filter;
     ///
-    /// assert_eq!(Filter::reset(), Filter::Off);
+    /// assert_eq!(Filter::RESET, Filter::Off);
     /// ```
-    pub const fn reset() -> Filter {
-        Filter::Off
-    }
+    pub const RESET: Self = Filter::Off;
 }
 
 impl Default for Filter {
     fn default() -> Self {
-        Filter::reset()
+        Filter::RESET
     }
 }
 
@@ -406,7 +398,7 @@ impl From<Filter> for u8 {
 /// ```
 /// use bme280_multibus::{Config, Filter, Standby};
 ///
-/// const CONFIG: Config = Config::reset()
+/// const CONFIG: Config = Config::RESET
 ///     .set_standby_time(Standby::Millis1000)
 ///     .set_filter(Filter::X16)
 ///     .set_spi3w_en(false);
@@ -422,12 +414,9 @@ impl Config {
     /// ```
     /// use bme280_multibus::Config;
     ///
-    /// assert_eq!(Config::reset(), Config::default());
+    /// assert_eq!(Config::RESET, Config::default());
     /// ```
-    #[must_use = "reset returns a Config struct with the reset value"]
-    pub const fn reset() -> Config {
-        Config(0x00)
-    }
+    pub const RESET: Self = Config(0x00);
 
     /// Set the inactive duration t<sub>standby</sub> in normal mode.
     ///
@@ -555,7 +544,7 @@ impl Config {
 
 impl Default for Config {
     fn default() -> Self {
-        Config::reset()
+        Config::RESET
     }
 }
 
@@ -574,12 +563,9 @@ impl CtrlMeas {
     /// ```
     /// use bme280_multibus::CtrlMeas;
     ///
-    /// assert_eq!(CtrlMeas::reset(), CtrlMeas::default());
+    /// assert_eq!(CtrlMeas::RESET, CtrlMeas::default());
     /// ```
-    #[must_use = "reset returns a CtrlMeas struct with the reset value"]
-    pub const fn reset() -> CtrlMeas {
-        CtrlMeas(0x00)
-    }
+    pub const RESET: Self = CtrlMeas(0x00);
 
     /// Set the oversampling for temperature data.
     ///
@@ -706,7 +692,7 @@ impl CtrlMeas {
 
 impl Default for CtrlMeas {
     fn default() -> Self {
-        CtrlMeas::reset()
+        CtrlMeas::RESET
     }
 }
 
@@ -722,12 +708,9 @@ impl Status {
     /// ```
     /// use bme280_multibus::Status;
     ///
-    /// assert_eq!(Status::reset(), Status::default());
+    /// assert_eq!(Status::RESET, Status::default());
     /// ```
-    #[must_use = "reset returns a Status struct with the reset value"]
-    pub const fn reset() -> Status {
-        Status(0x00)
-    }
+    pub const RESET: Self = Status(0x00);
 
     /// Measuring field.
     ///
@@ -737,7 +720,7 @@ impl Status {
     /// # Example
     ///
     /// ```
-    /// assert!(!bme280_multibus::Status::reset().measuring());
+    /// assert!(!bme280_multibus::Status::RESET.measuring());
     /// ```
     pub const fn measuring(&self) -> bool {
         self.0 & (1 << 3) != 0
@@ -752,7 +735,7 @@ impl Status {
     /// # Example
     ///
     /// ```
-    /// assert!(!bme280_multibus::Status::reset().im_update());
+    /// assert!(!bme280_multibus::Status::RESET.im_update());
     /// ```
     pub const fn im_update(&self) -> bool {
         self.0 & 1 != 0
@@ -770,7 +753,7 @@ impl core::fmt::Display for Status {
 
 impl Default for Status {
     fn default() -> Self {
-        Status::reset()
+        Status::RESET
     }
 }
 
@@ -794,10 +777,10 @@ impl Settings {
     /// use bme280_multibus::{Config, CtrlMeas, Filter, Mode, Oversampling, Settings, Standby};
     ///
     /// const SETTINGS: Settings = Settings {
-    ///     config: Config::reset()
+    ///     config: Config::RESET
     ///         .set_standby_time(Standby::Millis1000)
     ///         .set_filter(Filter::X16),
-    ///     ctrl_meas: CtrlMeas::reset()
+    ///     ctrl_meas: CtrlMeas::RESET
     ///         .set_osrs_t(Oversampling::X16)
     ///         .set_osrs_p(Oversampling::X16)
     ///         .set_mode(Mode::Normal),
@@ -806,9 +789,9 @@ impl Settings {
     /// ```
     pub const fn new() -> Settings {
         Settings {
-            config: Config::reset(),
-            ctrl_meas: CtrlMeas::reset(),
-            ctrl_hum: Oversampling::reset(),
+            config: Config::RESET,
+            ctrl_meas: CtrlMeas::RESET,
+            ctrl_hum: Oversampling::RESET,
         }
     }
 }
@@ -1164,10 +1147,10 @@ where
     /// };
     ///
     /// const SETTINGS: Settings = Settings {
-    ///     config: Config::reset()
+    ///     config: Config::RESET
     ///         .set_standby_time(Standby::Millis1000)
     ///         .set_filter(Filter::X16),
-    ///     ctrl_meas: CtrlMeas::reset()
+    ///     ctrl_meas: CtrlMeas::RESET
     ///         .set_osrs_t(Oversampling::X8)
     ///         .set_osrs_p(Oversampling::X8)
     ///         .set_mode(Mode::Normal),
@@ -1200,10 +1183,10 @@ where
     /// use bme280_multibus::{i2c::Address, Bme280, Sample, Standby};
     ///
     /// const SETTINGS: bme280_multibus::Settings = bme280_multibus::Settings {
-    ///     config: bme280_multibus::Config::reset()
+    ///     config: bme280_multibus::Config::RESET
     ///         .set_standby_time(bme280_multibus::Standby::Millis1000)
     ///         .set_filter(bme280_multibus::Filter::X16),
-    ///     ctrl_meas: bme280_multibus::CtrlMeas::reset()
+    ///     ctrl_meas: bme280_multibus::CtrlMeas::RESET
     ///         .set_osrs_t(bme280_multibus::Oversampling::X8)
     ///         .set_osrs_p(bme280_multibus::Oversampling::X8)
     ///         .set_mode(bme280_multibus::Mode::Normal),
