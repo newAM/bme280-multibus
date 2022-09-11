@@ -103,7 +103,7 @@ where
         where Self: 'a, E: 'a;
 
     #[allow(unsafe_code)]
-    fn write_reg<'a>(&'a mut self, reg: u8, data: u8) -> Self::WriteFuture<'a> {
+    fn write_reg(&mut self, reg: u8, data: u8) -> Self::WriteFuture<'_> {
         let buf: [u8; 2] = [reg & !(1 << 7), data];
         async move {
             eha0::spi::SpiDevice::transaction(&mut self.spi, move |bus| async move {
@@ -117,7 +117,7 @@ where
     type CalibrateFuture<'a> = impl core::future::Future<Output = Result<crate::Calibration, E>> + 'a
         where Self: 'a, E: 'a;
 
-    fn calibration<'a>(&'a mut self) -> Self::CalibrateFuture<'a> {
+    fn calibration(&mut self) -> Self::CalibrateFuture<'_> {
         async move {
             const FIRST: usize = (crate::reg::CALIB_25 - crate::reg::CALIB_00 + 1) as usize;
             debug_assert_eq!(FIRST, 26);

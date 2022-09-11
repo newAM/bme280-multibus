@@ -960,7 +960,7 @@ pub trait Bme280BusAsync {
     /// Write a single register to the BME280.
     ///
     /// See [`Bme280Bus::write_reg`] for more information.
-    fn write_reg<'a>(&'a mut self, reg: u8, data: u8) -> Self::WriteFuture<'a>;
+    fn write_reg(&mut self, reg: u8, data: u8) -> Self::WriteFuture<'_>;
 
     /// Calibrate future GAT
     type CalibrateFuture<'a>: core::future::Future<Output = Result<Calibration, Self::Error>> + 'a
@@ -969,7 +969,7 @@ pub trait Bme280BusAsync {
         Self::Error: 'a;
 
     /// Read the calibration from the chip.
-    fn calibration<'a>(&'a mut self) -> Self::CalibrateFuture<'a>;
+    fn calibration(&mut self) -> Self::CalibrateFuture<'_>;
 }
 
 /// BME280 driver.
