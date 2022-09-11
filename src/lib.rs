@@ -47,6 +47,11 @@
 
 use core::time::Duration;
 
+pub use eh0;
+pub use eh1;
+#[cfg(feature = "async")]
+pub use eha0;
+
 /// BME280 I2C bus implementation with embedded-val version 0.2
 pub mod i2c0;
 /// BME280 SPI bus implementation with embedded-val version 0.2
