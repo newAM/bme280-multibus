@@ -1034,7 +1034,7 @@ where
     B: Bme280Bus<Error = E>,
 {
     /// Create a new BME280 from a [`spi::Bme280Bus`](crate::spi0::Bme280Bus) or
-    /// a [`i2c::Bme280Bus`](crate::i2c::Bme280Bus).
+    /// a [`i2c0::Bme280Bus`](crate::i2c0::Bme280Bus).
     ///
     /// # Example
     ///
