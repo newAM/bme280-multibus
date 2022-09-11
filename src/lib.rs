@@ -11,7 +11,7 @@
 //! #   ehm0::i2c::Transaction::write(0x76, vec![0xF5, 0b10110000]),
 //! #   ehm0::i2c::Transaction::write_read(0x76, vec![0xF7], vec![0; 8]),
 //! # ]);
-//! use bme280_multibus::{i2c::Address, Bme280, Sample, Standby};
+//! use bme280_multibus::{i2c0::Address, Bme280, Sample, Standby};
 //!
 //! const SETTINGS: bme280_multibus::Settings = bme280_multibus::Settings {
 //!     config: bme280_multibus::Config::RESET
@@ -24,7 +24,7 @@
 //!     ctrl_hum: bme280_multibus::Oversampling::X8,
 //! };
 //!
-//! let mut bme: Bme280<_> = Bme280::from_i2c(i2c, Address::SdoGnd)?;
+//! let mut bme: Bme280<_> = Bme280::from_i2c0(i2c, Address::SdoGnd)?;
 //! bme.settings(&SETTINGS)?;
 //! let sample: Sample = bme.sample().unwrap();
 //! # Ok::<(), ehm0::MockError>(())
@@ -36,7 +36,7 @@
 use core::time::Duration;
 
 /// BME280 I2C bus implementation with embedded-val version 0.2
-pub mod i2c;
+pub mod i2c0;
 /// BME280 SPI bus implementation with embedded-val version 0.2
 pub mod spi0;
 /// BME280 SPI bus implementation with embedded-val version 1
@@ -930,7 +930,7 @@ pub struct Bme280<B> {
     cal: Calibration,
 }
 
-impl<I2C, E> Bme280<crate::i2c::Bme280Bus<I2C>>
+impl<I2C, E> Bme280<crate::i2c0::Bme280Bus<I2C>>
 where
     I2C: eh0::blocking::i2c::Write<Error = E> + eh0::blocking::i2c::WriteRead<Error = E>,
 {
@@ -944,13 +944,13 @@ where
     /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
     /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
     /// # ]);
-    /// use bme280_multibus::{i2c::Address, Bme280};
+    /// use bme280_multibus::{i2c0::Address, Bme280};
     ///
-    /// let mut bme: Bme280<_> = Bme280::from_i2c(i2c, Address::SdoGnd)?;
+    /// let mut bme: Bme280<_> = Bme280::from_i2c0(i2c, Address::SdoGnd)?;
     /// # Ok::<(), ehm0::MockError>(())
     /// ```
-    pub fn from_i2c(i2c: I2C, address: crate::i2c::Address) -> Result<Self, E> {
-        let bus = crate::i2c::Bme280Bus::new(i2c, address);
+    pub fn from_i2c0(i2c: I2C, address: crate::i2c0::Address) -> Result<Self, E> {
+        let bus = crate::i2c0::Bme280Bus::new(i2c, address);
         Self::new(bus)
     }
 }
@@ -1034,7 +1034,7 @@ where
     B: Bme280Bus<Error = E>,
 {
     /// Create a new BME280 from a [`spi::Bme280Bus`](crate::spi0::Bme280Bus) or
-    /// a [`i2c::Bme280Bus`](crate::i2c::Bme280Bus).
+    /// a [`i2c0::Bme280Bus`](crate::i2c0::Bme280Bus).
     ///
     /// # Example
     ///
@@ -1044,7 +1044,7 @@ where
     /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
     /// # ]);
     /// use bme280_multibus::{
-    ///     i2c::{Address, Bme280Bus},
+    ///     i2c0::{Address, Bme280Bus},
     ///     Bme280,
     /// };
     ///
@@ -1072,9 +1072,9 @@ where
     /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
     /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0xD0], vec![0x60]),
     /// # ]);
-    /// use bme280_multibus::{i2c::Address, Bme280, CHIP_ID};
+    /// use bme280_multibus::{i2c0::Address, Bme280, CHIP_ID};
     ///
-    /// let mut bme: Bme280<_> = Bme280::from_i2c(i2c, Address::SdoGnd)?;
+    /// let mut bme: Bme280<_> = Bme280::from_i2c0(i2c, Address::SdoGnd)?;
     /// let chip_id: u8 = bme.chip_id()?;
     /// assert_eq!(chip_id, CHIP_ID);
     /// # Ok::<(), ehm0::MockError>(())
@@ -1095,9 +1095,9 @@ where
     /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
     /// #   ehm0::i2c::Transaction::write(0x76, vec![0xE0, 0xB6]),
     /// # ]);
-    /// use bme280_multibus::{i2c::Address, Bme280};
+    /// use bme280_multibus::{i2c0::Address, Bme280};
     ///
-    /// let mut bme: Bme280<_> = Bme280::from_i2c(i2c, Address::SdoGnd)?;
+    /// let mut bme: Bme280<_> = Bme280::from_i2c0(i2c, Address::SdoGnd)?;
     /// bme.reset()?;
     /// # Ok::<(), ehm0::MockError>(())
     /// ```
@@ -1118,9 +1118,9 @@ where
     /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
     /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0xF3], vec![0]),
     /// # ]);
-    /// use bme280_multibus::{i2c::Address, Bme280, Status};
+    /// use bme280_multibus::{i2c0::Address, Bme280, Status};
     ///
-    /// let mut bme: Bme280<_> = Bme280::from_i2c(i2c, Address::SdoGnd)?;
+    /// let mut bme: Bme280<_> = Bme280::from_i2c0(i2c, Address::SdoGnd)?;
     /// let status: Status = bme.status()?;
     /// # Ok::<(), ehm0::MockError>(())
     /// ```
@@ -1143,7 +1143,7 @@ where
     /// #   ehm0::i2c::Transaction::write(0x76, vec![0xF5, 0b10110000]),
     /// # ]);
     /// use bme280_multibus::{
-    ///     i2c::Address, Bme280, Config, CtrlMeas, Filter, Mode, Oversampling, Settings, Standby,
+    ///     i2c0::Address, Bme280, Config, CtrlMeas, Filter, Mode, Oversampling, Settings, Standby,
     /// };
     ///
     /// const SETTINGS: Settings = Settings {
@@ -1157,7 +1157,7 @@ where
     ///     ctrl_hum: Oversampling::X8,
     /// };
     ///
-    /// let mut bme: Bme280<_> = Bme280::from_i2c(i2c, Address::SdoGnd)?;
+    /// let mut bme: Bme280<_> = Bme280::from_i2c0(i2c, Address::SdoGnd)?;
     /// bme.settings(&SETTINGS)?;
     /// # Ok::<(), ehm0::MockError>(())
     /// ```
@@ -1180,7 +1180,7 @@ where
     /// #   ehm0::i2c::Transaction::write(0x76, vec![0xF5, 0b10110000]),
     /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0xF7], vec![0; 8]),
     /// # ]);
-    /// use bme280_multibus::{i2c::Address, Bme280, Sample, Standby};
+    /// use bme280_multibus::{i2c0::Address, Bme280, Sample, Standby};
     ///
     /// const SETTINGS: bme280_multibus::Settings = bme280_multibus::Settings {
     ///     config: bme280_multibus::Config::RESET
@@ -1193,7 +1193,7 @@ where
     ///     ctrl_hum: bme280_multibus::Oversampling::X8,
     /// };
     ///
-    /// let mut bme: Bme280<_> = Bme280::from_i2c(i2c, Address::SdoGnd)?;
+    /// let mut bme: Bme280<_> = Bme280::from_i2c0(i2c, Address::SdoGnd)?;
     /// bme.settings(&SETTINGS)?;
     /// let sample: Sample = bme.sample().unwrap();
     /// # Ok::<(), ehm0::MockError>(())
