@@ -34,6 +34,7 @@
 //!
 //! * `async` Enable asynchronous implementations with `embedded-hal-async`.
 //!   Requires a nightly toolchain.
+//! * `serde` Add `Serialize` and `Deserialize` to `Sample`.
 #![no_std]
 #![cfg_attr(
     feature = "async",
