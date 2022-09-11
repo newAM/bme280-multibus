@@ -1130,8 +1130,7 @@ where
 impl<SPI, E> Bme280<crate::spi1::Bme280Bus<SPI>>
 where
     SPI: eh1::spi::blocking::SpiDevice<Error = E>,
-    SPI::Bus:
-        eh1::spi::blocking::SpiBusRead<Error = E> + eh1::spi::blocking::SpiBusWrite<Error = E>,
+    SPI::Bus: eh1::spi::blocking::SpiBusRead + eh1::spi::blocking::SpiBusWrite,
 {
     /// Creates a new `Bme280` driver from an embedded-hal version 1 SPI device.
     ///
@@ -1163,8 +1162,7 @@ where
 impl<SPI, E> Bme280<crate::spi1::Bme280Bus<SPI>>
 where
     SPI: eha0::spi::SpiDevice<Error = E>,
-    <SPI as eha0::spi::SpiDevice>::Bus:
-        eha0::spi::SpiBusRead<Error = E> + eha0::spi::SpiBusWrite<Error = E>,
+    <SPI as eha0::spi::SpiDevice>::Bus: eha0::spi::SpiBusRead + eha0::spi::SpiBusWrite,
 {
     /// Creates a new `Bme280` driver from an embedded-hal-async SPI device.
     pub async fn from_spia0(spi: SPI) -> Result<Self, E> {

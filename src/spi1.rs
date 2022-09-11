@@ -57,8 +57,7 @@ impl<SPI> Bme280Bus<SPI> {
 impl<SPI, E> crate::Bme280Bus for Bme280Bus<SPI>
 where
     SPI: eh1::spi::blocking::SpiDevice<Error = E>,
-    SPI::Bus:
-        eh1::spi::blocking::SpiBusRead<Error = E> + eh1::spi::blocking::SpiBusWrite<Error = E>,
+    SPI::Bus: eh1::spi::blocking::SpiBusRead + eh1::spi::blocking::SpiBusWrite,
 {
     type Error = E;
 
@@ -79,8 +78,7 @@ where
 impl<SPI, E> crate::Bme280BusAsync for Bme280Bus<SPI>
 where
     SPI: eha0::spi::SpiDevice<Error = E>,
-    <SPI as eha0::spi::SpiDevice>::Bus:
-        eha0::spi::SpiBusRead<Error = E> + eha0::spi::SpiBusWrite<Error = E>,
+    <SPI as eha0::spi::SpiDevice>::Bus: eha0::spi::SpiBusRead + eha0::spi::SpiBusWrite,
 {
     type Error = E;
 
