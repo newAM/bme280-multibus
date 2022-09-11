@@ -84,7 +84,7 @@ where
 {
     type Error = E;
 
-    type ReadFuture<'a> = impl core::future::Future<Output = Result<(), E>> + 'a
+    type ReadFuture<'a> = impl core::future::Future<Output = Result<(), Self::Error>> + 'a
         where Self: 'a, E: 'a;
 
     #[allow(unsafe_code)]
@@ -99,7 +99,7 @@ where
         }
     }
 
-    type WriteFuture<'a> = impl core::future::Future<Output = Result<(), E>> + 'a
+    type WriteFuture<'a> = impl core::future::Future<Output = Result<(), Self::Error>> + 'a
         where Self: 'a, E: 'a;
 
     #[allow(unsafe_code)]
@@ -114,7 +114,7 @@ where
         }
     }
 
-    type CalibrateFuture<'a> = impl core::future::Future<Output = Result<crate::Calibration, E>> + 'a
+    type CalibrateFuture<'a> = impl core::future::Future<Output = Result<crate::Calibration, Self::Error>> + 'a
         where Self: 'a, E: 'a;
 
     fn calibration(&mut self) -> Self::CalibrateFuture<'_> {
