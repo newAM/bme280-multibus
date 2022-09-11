@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed the `i2c` module to `i2c0`.
 - Renamed the `spi` module to `spi0`.
 - Renamed `Bme280::from_spi` to `Bme280::from_spi0`.
+- Renamed `Bme280::from_i2c` to `Bme280::from_i2c0`.
 - Moved `bme280_multibus::spi::MAX_FREQ` to `bme280_multibus::SPI_MAX_FREQ`.
 - Changed `pub const fn reset` to a `RESET` constant for:
   - `Mode`
