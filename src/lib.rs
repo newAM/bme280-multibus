@@ -36,7 +36,7 @@
 use core::time::Duration;
 
 /// BME280 I2C bus implementation with embedded-val version 0.2
-pub mod i2c;
+pub mod i2c0;
 /// BME280 SPI bus implementation with embedded-val version 0.2
 pub mod spi0;
 /// BME280 SPI bus implementation with embedded-val version 1

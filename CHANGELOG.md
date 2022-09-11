@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added SPI implementations for embedded-hal version 1.0.0-alpha.8.
 
 ### Changed
+- Renamed the `i2c` module to `i2c0`.
 - Renamed the `spi` module to `spi0`.
 - Renamed `Bme280::from_spi` to `Bme280::from_spi0`.
 - Moved `bme280_multibus::spi::MAX_FREQ` to `bme280_multibus::SPI_MAX_FREQ`.
