@@ -835,6 +835,9 @@ pub struct Sample {
 
 impl Sample {
     fn from_raw<B>(buf: &[u8; NUM_MEAS_REG], cal: &Calibration) -> Result<Self, Error<B>> {
+        // The magical math and magical numbers come from the datasheet.
+        // I am not to blame for this.
+
         // msb [7:0] = p[19:12]
         // lsb [7:0] = p[11:4]
         // xlsb[7:4] = p[3:0]
@@ -1219,9 +1222,6 @@ where
 
     /// Read a sample from the BME280.
     pub async fn sample_async(&mut self) -> Result<Sample, Error<E>> {
-        // The magical math and magical numbers come from the datasheet.
-        // I am not to blame for this.
-
         let mut buf: [u8; NUM_MEAS_REG] = [0; NUM_MEAS_REG];
         self.bus
             .read_regs(reg::PRESS_MSB, &mut buf)
@@ -1401,9 +1401,6 @@ where
     /// # Ok::<(), ehm0::MockError>(())
     /// ```
     pub fn sample(&mut self) -> Result<Sample, Error<E>> {
-        // The magical math and magical numbers come from the datasheet.
-        // I am not to blame for this.
-
         let mut buf: [u8; NUM_MEAS_REG] = [0; NUM_MEAS_REG];
         self.bus
             .read_regs(reg::PRESS_MSB, &mut buf)
