@@ -1,5 +1,8 @@
 use eh1::spi::blocking::{SpiBusRead, SpiBusWrite};
 
+#[cfg(feature = "async")]
+use eha0::spi::{SpiBusRead as SpiBusReadAsync, SpiBusWrite as SpiBusWriteAsync};
+
 /// BME280 bus.
 #[derive(Debug)]
 pub struct Bme280Bus<SPI> {
@@ -11,10 +14,7 @@ pub struct Bme280Bus<SPI> {
 /// The BME280 also supports mode 3.
 pub const MODE: eh1::spi::Mode = eh1::spi::MODE_0;
 
-impl<SPI, E> Bme280Bus<SPI>
-where
-    SPI: eh1::spi::blocking::SpiDevice<Error = E>,
-{
+impl<SPI> Bme280Bus<SPI> {
     /// Creates a new `Bme280Bus` from a SPI peripheral and a chip select
     /// digital I/O pin.
     ///
@@ -72,5 +72,65 @@ where
     fn write_reg(&mut self, reg: u8, data: u8) -> Result<(), Self::Error> {
         let buf: [u8; 2] = [reg & !(1 << 7), data];
         self.spi.transaction(|spi| spi.write(&buf))
+    }
+}
+
+#[cfg(feature = "async")]
+impl<SPI, E> crate::Bme280BusAsync for Bme280Bus<SPI>
+where
+    SPI: eha0::spi::SpiDevice<Error = E>,
+    <SPI as eha0::spi::SpiDevice>::Bus:
+        eha0::spi::SpiBusRead<Error = E> + eha0::spi::SpiBusWrite<Error = E>,
+{
+    type Error = E;
+
+    type ReadFuture<'a> = impl core::future::Future<Output = Result<(), E>> + 'a
+        where Self: 'a, E: 'a;
+
+    #[allow(unsafe_code)]
+    fn read_regs<'a>(&'a mut self, reg: u8, buf: &'a mut [u8]) -> Self::ReadFuture<'a> {
+        async move {
+            eha0::spi::SpiDevice::transaction(&mut self.spi, move |bus| async move {
+                let bus = unsafe { &mut *bus };
+                bus.write(&[reg | (1 << 7)]).await?;
+                bus.read(buf).await
+            })
+            .await
+        }
+    }
+
+    type WriteFuture<'a> = impl core::future::Future<Output = Result<(), E>> + 'a
+        where Self: 'a, E: 'a;
+
+    #[allow(unsafe_code)]
+    fn write_reg<'a>(&'a mut self, reg: u8, data: u8) -> Self::WriteFuture<'a> {
+        let buf: [u8; 2] = [reg & !(1 << 7), data];
+        async move {
+            eha0::spi::SpiDevice::transaction(&mut self.spi, move |bus| async move {
+                let bus = unsafe { &mut *bus };
+                bus.write(&buf).await
+            })
+            .await
+        }
+    }
+
+    type CalibrateFuture<'a> = impl core::future::Future<Output = Result<crate::Calibration, E>> + 'a
+        where Self: 'a, E: 'a;
+
+    fn calibration<'a>(&'a mut self) -> Self::CalibrateFuture<'a> {
+        async move {
+            const FIRST: usize = (crate::reg::CALIB_25 - crate::reg::CALIB_00 + 1) as usize;
+            debug_assert_eq!(FIRST, 26);
+            const SECOND: usize = (crate::reg::CALIB_32 - crate::reg::CALIB_26 + 1) as usize;
+            debug_assert_eq!((FIRST + SECOND), crate::NUM_CALIB_REG);
+
+            let mut buf: [u8; crate::NUM_CALIB_REG] = [0; crate::NUM_CALIB_REG];
+            self.read_regs(crate::reg::CALIB_00, &mut buf[0..FIRST])
+                .await?;
+            self.read_regs(crate::reg::CALIB_26, &mut buf[FIRST..(FIRST + SECOND)])
+                .await?;
+
+            Ok(buf.into())
+        }
     }
 }
