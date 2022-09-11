@@ -20,7 +20,7 @@ jobs:
           - "thumbv6m-none-eabi"
           - "thumbv7em-none-eabi"
         toolchain:
-          - "1.63" # Update MSRV in Cargo.toml
+          - "stable"
           - "nightly"
     steps:
       - uses: actions/checkout@v3
