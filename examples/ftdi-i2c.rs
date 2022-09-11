@@ -14,10 +14,10 @@ use ftdi_embedded_hal::{
 };
 
 const SETTINGS: bme280_multibus::Settings = bme280_multibus::Settings {
-    config: bme280_multibus::Config::reset()
+    config: bme280_multibus::Config::RESET
         .set_standby_time(bme280_multibus::Standby::Millis125)
         .set_filter(bme280_multibus::Filter::X8),
-    ctrl_meas: bme280_multibus::CtrlMeas::reset()
+    ctrl_meas: bme280_multibus::CtrlMeas::RESET
         .set_osrs_t(bme280_multibus::Oversampling::X8)
         .set_osrs_p(bme280_multibus::Oversampling::X8)
         .set_mode(bme280_multibus::Mode::Normal),

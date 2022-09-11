@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed the `spi` module to `spi0`.
 - Renamed `Bme280::from_spi` to `Bme280::from_spi0`.
 - Moved `bme280_multibus::spi::MAX_FREQ` to `bme280_multibus::SPI_MAX_FREQ`.
+- Changed `pub const fn reset` to a `RESET` constant for:
+  - `Mode`
+  - `Standby`
+  - `Filter`
+  - `Config`
+  - `CtrlMeas`
+  - `Status`
 
 ## [0.2.2] - 2022-08-13
 ### Fixed
