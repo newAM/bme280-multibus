@@ -23,7 +23,7 @@ const SETTINGS: bme280_multibus::Settings = bme280_multibus::Settings {
     ctrl_hum: bme280_multibus::Oversampling::X8,
 };
 
-let mut bme: Bme280<_> = Bme280::from_i2c(i2c, Address::SdoGnd)?;
+let mut bme: Bme280<_> = Bme280::from_i2c0(i2c, Address::SdoGnd)?;
 bme.settings(&SETTINGS)?;
 let sample: Sample = bme.sample()?;
 ```
