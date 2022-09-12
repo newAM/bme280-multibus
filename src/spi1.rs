@@ -110,13 +110,14 @@ where
         where Self: 'a, E: 'a;
 
     fn calibration(&mut self) -> Self::CalibrateFuture<'_> {
-        async move {
-            const FIRST: usize = (crate::reg::CALIB_25 - crate::reg::CALIB_00 + 1) as usize;
-            debug_assert_eq!(FIRST, 26);
-            const SECOND: usize = (crate::reg::CALIB_32 - crate::reg::CALIB_26 + 1) as usize;
-            debug_assert_eq!((FIRST + SECOND), crate::NUM_CALIB_REG);
+        const FIRST: usize = (crate::reg::CALIB_25 - crate::reg::CALIB_00 + 1) as usize;
+        debug_assert_eq!(FIRST, 26);
+        const SECOND: usize = (crate::reg::CALIB_32 - crate::reg::CALIB_26 + 1) as usize;
+        debug_assert_eq!((FIRST + SECOND), crate::NUM_CALIB_REG);
 
-            let mut buf: [u8; crate::NUM_CALIB_REG] = [0; crate::NUM_CALIB_REG];
+        let mut buf: [u8; crate::NUM_CALIB_REG] = [0; crate::NUM_CALIB_REG];
+
+        async move {
             self.read_regs(crate::reg::CALIB_00, &mut buf[0..FIRST])
                 .await?;
             self.read_regs(crate::reg::CALIB_26, &mut buf[FIRST..(FIRST + SECOND)])
