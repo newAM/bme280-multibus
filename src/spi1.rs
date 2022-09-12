@@ -103,13 +103,7 @@ where
     #[allow(unsafe_code)]
     fn write_reg(&mut self, reg: u8, data: u8) -> Self::WriteFuture<'_> {
         let buf: [u8; 2] = [reg & !(1 << 7), data];
-        async move {
-            eha0::spi::SpiDevice::transaction(&mut self.spi, move |bus| async move {
-                let bus = unsafe { &mut *bus };
-                bus.write(&buf).await
-            })
-            .await
-        }
+        async move { self.spi.write(&buf).await }
     }
 
     type CalibrateFuture<'a> = impl core::future::Future<Output = Result<crate::Calibration, Self::Error>> + 'a
