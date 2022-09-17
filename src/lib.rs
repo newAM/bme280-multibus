@@ -36,7 +36,11 @@
 //!   Requires a nightly toolchain.
 //! * `serde` Add `Serialize` and `Deserialize` to `Sample`.
 #![no_std]
-#![cfg_attr(feature = "async", feature(type_alias_impl_trait))]
+#![cfg_attr(
+    feature = "async",
+    feature(generic_associated_types),
+    feature(type_alias_impl_trait)
+)]
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
 #![deny(unsafe_code)]
 #![warn(missing_docs)]
