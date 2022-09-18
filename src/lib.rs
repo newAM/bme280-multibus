@@ -920,7 +920,7 @@ pub enum Error<B> {
     Sample,
 }
 
-/// BME280 bus, I2C or SPI.
+/// BME280 bus.
 pub trait Bme280Bus {
     /// BME280 bus error.
     type Error;
@@ -1014,7 +1014,8 @@ pub trait Bme280Bus {
     }
 }
 
-/// Asynchronous BME280 bus, only supports SPI at the moment.
+/// Asynchronous BME280 bus.
+#[cfg(feature = "async")] // TODO: remove when GATs are on stable (1.65?)
 pub trait Bme280BusAsync {
     /// BME280 bus error.
     type Error;
@@ -1169,6 +1170,7 @@ where
     }
 }
 
+#[cfg(feature = "async")] // TODO: remove when GATs are on stable (1.65?)
 impl<B, E> Bme280<B>
 where
     B: Bme280BusAsync<Error = E>,
