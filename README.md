@@ -4,7 +4,7 @@
 
 # bme280-multibus
 
-BME280 driver with support for I2C and SPI bus options.
+BME280 driver with support for I2C and SPI buses.
 
 ## Example
 

@@ -1,4 +1,4 @@
-//! BME280 driver with support for I2C and SPI bus options.
+//! BME280 driver with support for I2C and SPI buses.
 //!
 //! # Example
 //!
@@ -1015,7 +1015,6 @@ pub trait Bme280Bus {
 }
 
 /// Asynchronous BME280 bus, only supports SPI at the moment.
-#[cfg(feature = "async")]
 pub trait Bme280BusAsync {
     /// BME280 bus error.
     type Error;
@@ -1170,12 +1169,11 @@ where
     }
 }
 
-#[cfg(feature = "async")]
 impl<B, E> Bme280<B>
 where
     B: Bme280BusAsync<Error = E>,
 {
-    /// Create a new BME280 from an asynchronous [`spi1::Bme280Bus`](crate::spi1::Bme280Bus).
+    /// Create a new BME280 from a [`Bme280BusAsync`].
     pub async fn new_async(mut bus: B) -> Result<Self, E> {
         let cal: Calibration = bus.calibration().await?;
         Ok(Self { bus, cal })
