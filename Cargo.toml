@@ -3,7 +3,6 @@ name = "bme280-multibus"
 version = "0.2.2"
 authors = ["Alex Martens <alex@thinglab.org>"]
 edition = "2021"
-rust-version = "1.56"  # Update MSRV in CI
 repository = "https://github.com/newAM/bme280-multibus"
 license = "MIT"
 description = "BME280 driver with support for SPI and I2C"
@@ -11,12 +10,20 @@ readme = "README.md"
 keywords = ["i2c", "driver", "embedded-hal-driver", "bosch", "bme280"]
 categories = ["embedded", "hardware-support", "no-std"]
 
+[features]
+async = ["dep:eha0"]
+
 [dependencies]
 eh0 = { package = "embedded-hal", version = "0.2.7" }
 eh1 = { package = "embedded-hal", version = "1.0.0-alpha.8" }
+eha0 = { package = "embedded-hal-async", version = "0.1.0-alpha.1", optional = true }
 serde = { version = "1", features = ["derive"], default-features = false, optional = true }
 
 [dev-dependencies]
 ehm0 = { package = "embedded-hal-mock", version = "0.8" }
 ehm1 = { package = "embedded-hal-mock", git = "https://github.com/dbrgn/embedded-hal-mock", branch = "1-alpha" }
 ftdi-embedded-hal = { version = "0.12", features = ["libftd2xx"] }
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

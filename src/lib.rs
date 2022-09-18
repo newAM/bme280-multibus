@@ -1,4 +1,4 @@
-//! BME280 driver with support for I2C and SPI bus options.
+//! BME280 driver with support for I2C and SPI buses.
 //!
 //! # Example
 //!
@@ -29,11 +29,24 @@
 //! let sample: Sample = bme.sample().unwrap();
 //! # Ok::<(), ehm0::MockError>(())
 //! ```
+//!
+//! # Features
+//!
+//! * `async` Enable asynchronous implementations with `embedded-hal-async`.
+//!   Requires a nightly toolchain.
+//! * `serde` Add `Serialize` and `Deserialize` to `Sample`.
 #![no_std]
-#![forbid(unsafe_code)]
+#![cfg_attr(feature = "async", feature(type_alias_impl_trait))]
+#![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
+#![deny(unsafe_code)]
 #![warn(missing_docs)]
 
 use core::time::Duration;
+
+pub use eh0;
+pub use eh1;
+#[cfg(feature = "async")]
+pub use eha0;
 
 /// BME280 I2C bus implementation with embedded-val version 0.2
 pub mod i2c0;
@@ -101,6 +114,8 @@ impl From<[u8; NUM_CALIB_REG]> for Calibration {
         }
     }
 }
+
+const RESET_MAGIC: u8 = 0xB6;
 
 /// Register addresses.
 ///
@@ -814,6 +829,82 @@ pub struct Sample {
     pub humidity: f32,
 }
 
+impl Sample {
+    fn from_raw<B>(buf: &[u8; NUM_MEAS_REG], cal: &Calibration) -> Result<Self, Error<B>> {
+        // The magical math and magical numbers come from the datasheet.
+        // I am not to blame for this.
+
+        // msb [7:0] = p[19:12]
+        // lsb [7:0] = p[11:4]
+        // xlsb[7:4] = p[3:0]
+        let p: u32 = ((buf[0] as u32) << 12) | ((buf[1] as u32) << 4) | ((buf[2] as u32) >> 4);
+        // msb [7:0] = t[19:12]
+        // lsb [7:0] = t[11:4]
+        // xlsb[7:4] = t[3:0]
+        let t: u32 = ((buf[3] as u32) << 12) | ((buf[4] as u32) << 4) | ((buf[5] as u32) >> 4);
+        // msb [7:0] = h[15:8]
+        // lsb [7:0] = h[7:0]
+        let h: u32 = ((buf[6] as u32) << 8) | (buf[7] as u32);
+
+        if t == 0x80000000 || p == 0x80000000 || h == 0x8000 {
+            return Err(Error::Sample);
+        }
+
+        let p: i32 = p as i32;
+        let t: i32 = t as i32;
+        let h: i32 = h as i32;
+
+        let var1: i32 = (((t >> 3) - ((cal.t1 as i32) << 1)) * (cal.t2 as i32)) >> 11;
+        let var2: i32 = (((((t >> 4) - (cal.t1 as i32)) * ((t >> 4) - (cal.t1 as i32))) >> 12)
+            * (cal.t3 as i32))
+            >> 14;
+
+        let t_fine: i32 = var1 + var2;
+
+        let temperatue: i32 = (t_fine * 5 + 128) >> 8;
+        let temperature: f32 = (temperatue as f32) / 100.0;
+
+        let var1: i64 = (t_fine as i64) - 128000;
+        let var2: i64 = var1 * var1 * (cal.p6 as i64);
+        let var2: i64 = var2 + ((var1 * (cal.p5 as i64)) << 17);
+        let var2: i64 = var2 + ((cal.p4 as i64) << 35);
+        let var1: i64 = ((var1 * var1 * (cal.p3 as i64)) >> 8) + ((var1 * (cal.p2 as i64)) << 12);
+        let var1: i64 = ((((1i64) << 47) + var1) * (cal.p1 as i64)) >> 33;
+        let pressure: f32 = if var1 == 0 {
+            0.0
+        } else {
+            let var3: i64 = 1048576 - (p as i64);
+            let var3: i64 = (((var3 << 31) - var2) * 3125) / var1;
+            let var1: i64 = ((cal.p9 as i64) * (var3 >> 13) * (var3 >> 13)) >> 25;
+            let var2: i64 = ((cal.p8 as i64) * var3) >> 19;
+
+            let var3: i64 = ((var3 + var1 + var2) >> 8) + ((cal.p7 as i64) << 4);
+            (var3 as f32) / 256.0
+        };
+
+        let var1: i32 = t_fine - 76800i32;
+        let var1: i32 =
+            ((((h << 14) - ((cal.h4 as i32) << 20) - ((cal.h5 as i32) * var1)) + 16384i32) >> 15)
+                * (((((((var1 * (cal.h6 as i32)) >> 10)
+                    * (((var1 * (cal.h3 as i32)) >> 11) + (32768i32)))
+                    >> 10)
+                    + (2097152i32))
+                    * (cal.h2 as i32)
+                    + 8192)
+                    >> 14);
+        let var1: i32 = var1 - (((((var1 >> 15) * (var1 >> 15)) >> 7) * (cal.h1 as i32)) >> 4);
+        let var1: i32 = if var1 < 0 { 0 } else { var1 };
+        let var1: i32 = if var1 > 419430400 { 419430400 } else { var1 };
+        let humidity: f32 = ((var1 >> 12) as f32) / 1024.0;
+
+        Ok(Sample {
+            temperature,
+            pressure,
+            humidity,
+        })
+    }
+}
+
 /// Sampling error.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Error<B> {
@@ -829,7 +920,7 @@ pub enum Error<B> {
     Sample,
 }
 
-/// BME280 bus, I2C or SPI.
+/// BME280 bus.
 pub trait Bme280Bus {
     /// BME280 bus error.
     type Error;
@@ -923,6 +1014,44 @@ pub trait Bme280Bus {
     }
 }
 
+/// Asynchronous BME280 bus.
+#[cfg(feature = "async")] // TODO: remove when GATs are on stable (1.65?)
+pub trait Bme280BusAsync {
+    /// BME280 bus error.
+    type Error;
+
+    /// Read future GAT
+    type ReadFuture<'a>: core::future::Future<Output = Result<(), Self::Error>> + 'a
+    where
+        Self: 'a,
+        Self::Error: 'a;
+
+    /// Read from the BME280.
+    ///
+    /// See [`Bme280Bus::read_regs`] for more information.
+    fn read_regs<'a>(&'a mut self, reg: u8, buf: &'a mut [u8]) -> Self::ReadFuture<'a>;
+
+    /// Write future GAT
+    type WriteFuture<'a>: core::future::Future<Output = Result<(), Self::Error>> + 'a
+    where
+        Self: 'a,
+        Self::Error: 'a;
+
+    /// Write a single register to the BME280.
+    ///
+    /// See [`Bme280Bus::write_reg`] for more information.
+    fn write_reg(&mut self, reg: u8, data: u8) -> Self::WriteFuture<'_>;
+
+    /// Calibrate future GAT
+    type CalibrateFuture<'a>: core::future::Future<Output = Result<Calibration, Self::Error>> + 'a
+    where
+        Self: 'a,
+        Self::Error: 'a;
+
+    /// Read the calibration from the chip.
+    fn calibration(&mut self) -> Self::CalibrateFuture<'_>;
+}
+
 /// BME280 driver.
 #[derive(Debug)]
 pub struct Bme280<B> {
@@ -1000,8 +1129,7 @@ where
 impl<SPI, E> Bme280<crate::spi1::Bme280Bus<SPI>>
 where
     SPI: eh1::spi::blocking::SpiDevice<Error = E>,
-    SPI::Bus:
-        eh1::spi::blocking::SpiBusRead<Error = E> + eh1::spi::blocking::SpiBusWrite<Error = E>,
+    SPI::Bus: eh1::spi::blocking::SpiBusRead + eh1::spi::blocking::SpiBusWrite,
 {
     /// Creates a new `Bme280` driver from an embedded-hal version 1 SPI device.
     ///
@@ -1024,8 +1152,79 @@ where
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     pub fn from_spi1(spi: SPI) -> Result<Self, E> {
-        let bus = crate::spi1::Bme280Bus::new(spi);
+        let bus: crate::spi1::Bme280Bus<SPI> = crate::spi1::Bme280Bus::new(spi);
         Self::new(bus)
+    }
+}
+
+#[cfg(feature = "async")]
+impl<SPI, E> Bme280<crate::spi1::Bme280Bus<SPI>>
+where
+    SPI: eha0::spi::SpiDevice<Error = E>,
+    <SPI as eha0::spi::SpiDevice>::Bus: eha0::spi::SpiBusRead + eha0::spi::SpiBusWrite,
+{
+    /// Creates a new `Bme280` driver from an embedded-hal-async SPI device.
+    pub async fn from_spia0(spi: SPI) -> Result<Self, E> {
+        let bus = crate::spi1::Bme280Bus::new(spi);
+        Self::new_async(bus).await
+    }
+}
+
+#[cfg(feature = "async")] // TODO: remove when GATs are on stable (1.65?)
+impl<B, E> Bme280<B>
+where
+    B: Bme280BusAsync<Error = E>,
+{
+    /// Create a new BME280 from a [`Bme280BusAsync`].
+    pub async fn new_async(mut bus: B) -> Result<Self, E> {
+        let cal: Calibration = bus.calibration().await?;
+        Ok(Self { bus, cal })
+    }
+
+    /// BME280 chip ID.
+    ///
+    /// The return value is a constant, [`CHIP_ID`].
+    ///
+    /// This register is useful as a sanity check to ensure communications are
+    /// working with the BME280.
+    pub async fn chip_id_async(&mut self) -> Result<u8, E> {
+        let mut buf: [u8; 1] = [0];
+        self.bus.read_regs(reg::ID, &mut buf).await?;
+        Ok(buf[0])
+    }
+
+    /// Reset the BME280.
+    pub async fn reset_async(&mut self) -> Result<(), E> {
+        self.bus.write_reg(reg::RESET, RESET_MAGIC).await
+    }
+
+    /// Get the status of the device.
+    pub async fn status_async(&mut self) -> Result<Status, E> {
+        let mut buf: [u8; 1] = [0];
+        self.bus.read_regs(reg::STATUS, &mut buf).await?;
+        Ok(Status(buf[0]))
+    }
+
+    /// Configure the BME280 settings.
+    pub async fn settings_async(&mut self, settings: &Settings) -> Result<(), E> {
+        self.bus
+            .write_reg(reg::CTRL_HUM, settings.ctrl_hum as u8)
+            .await?;
+        self.bus
+            .write_reg(reg::CTRL_MEAS, settings.ctrl_meas.0)
+            .await?;
+        self.bus.write_reg(reg::CONFIG, settings.config.0).await
+    }
+
+    /// Read a sample from the BME280.
+    pub async fn sample_async(&mut self) -> Result<Sample, Error<E>> {
+        let mut buf: [u8; NUM_MEAS_REG] = [0; NUM_MEAS_REG];
+        self.bus
+            .read_regs(reg::PRESS_MSB, &mut buf)
+            .await
+            .map_err(Error::Bus)?;
+
+        Sample::from_raw(&buf, &self.cal)
     }
 }
 
@@ -1033,7 +1232,7 @@ impl<B, E> Bme280<B>
 where
     B: Bme280Bus<Error = E>,
 {
-    /// Create a new BME280 from a [`spi::Bme280Bus`](crate::spi0::Bme280Bus) or
+    /// Create a new BME280 from a [`spi0::Bme280Bus`](crate::spi0::Bme280Bus) or
     /// a [`i2c0::Bme280Bus`](crate::i2c0::Bme280Bus).
     ///
     /// # Example
@@ -1102,7 +1301,6 @@ where
     /// # Ok::<(), ehm0::MockError>(())
     /// ```
     pub fn reset(&mut self) -> Result<(), E> {
-        const RESET_MAGIC: u8 = 0xB6;
         self.bus.write_reg(reg::RESET, RESET_MAGIC)
     }
 
@@ -1199,83 +1397,11 @@ where
     /// # Ok::<(), ehm0::MockError>(())
     /// ```
     pub fn sample(&mut self) -> Result<Sample, Error<E>> {
-        // The magical math and magical numbers come from the datasheet.
-        // I am not to blame for this.
-
         let mut buf: [u8; NUM_MEAS_REG] = [0; NUM_MEAS_REG];
         self.bus
             .read_regs(reg::PRESS_MSB, &mut buf)
             .map_err(Error::Bus)?;
 
-        // msb [7:0] = p[19:12]
-        // lsb [7:0] = p[11:4]
-        // xlsb[7:4] = p[3:0]
-        let p: u32 = ((buf[0] as u32) << 12) | ((buf[1] as u32) << 4) | ((buf[2] as u32) >> 4);
-        // msb [7:0] = t[19:12]
-        // lsb [7:0] = t[11:4]
-        // xlsb[7:4] = t[3:0]
-        let t: u32 = ((buf[3] as u32) << 12) | ((buf[4] as u32) << 4) | ((buf[5] as u32) >> 4);
-        // msb [7:0] = h[15:8]
-        // lsb [7:0] = h[7:0]
-        let h: u32 = ((buf[6] as u32) << 8) | (buf[7] as u32);
-
-        if t == 0x80000000 || p == 0x80000000 || h == 0x8000 {
-            return Err(Error::Sample);
-        }
-
-        let p: i32 = p as i32;
-        let t: i32 = t as i32;
-        let h: i32 = h as i32;
-
-        let cal: &Calibration = &self.cal;
-
-        let var1: i32 = (((t >> 3) - ((cal.t1 as i32) << 1)) * (cal.t2 as i32)) >> 11;
-        let var2: i32 = (((((t >> 4) - (cal.t1 as i32)) * ((t >> 4) - (cal.t1 as i32))) >> 12)
-            * (cal.t3 as i32))
-            >> 14;
-
-        let t_fine: i32 = var1 + var2;
-
-        let temperatue: i32 = (t_fine * 5 + 128) >> 8;
-        let temperature: f32 = (temperatue as f32) / 100.0;
-
-        let var1: i64 = (t_fine as i64) - 128000;
-        let var2: i64 = var1 * var1 * (cal.p6 as i64);
-        let var2: i64 = var2 + ((var1 * (cal.p5 as i64)) << 17);
-        let var2: i64 = var2 + ((cal.p4 as i64) << 35);
-        let var1: i64 = ((var1 * var1 * (cal.p3 as i64)) >> 8) + ((var1 * (cal.p2 as i64)) << 12);
-        let var1: i64 = ((((1i64) << 47) + var1) * (cal.p1 as i64)) >> 33;
-        let pressure: f32 = if var1 == 0 {
-            0.0
-        } else {
-            let var3: i64 = 1048576 - (p as i64);
-            let var3: i64 = (((var3 << 31) - var2) * 3125) / var1;
-            let var1: i64 = ((cal.p9 as i64) * (var3 >> 13) * (var3 >> 13)) >> 25;
-            let var2: i64 = ((cal.p8 as i64) * var3) >> 19;
-
-            let var3: i64 = ((var3 + var1 + var2) >> 8) + ((cal.p7 as i64) << 4);
-            (var3 as f32) / 256.0
-        };
-
-        let var1: i32 = t_fine - 76800i32;
-        let var1: i32 =
-            ((((h << 14) - ((cal.h4 as i32) << 20) - ((cal.h5 as i32) * var1)) + 16384i32) >> 15)
-                * (((((((var1 * (cal.h6 as i32)) >> 10)
-                    * (((var1 * (cal.h3 as i32)) >> 11) + (32768i32)))
-                    >> 10)
-                    + (2097152i32))
-                    * (cal.h2 as i32)
-                    + 8192)
-                    >> 14);
-        let var1: i32 = var1 - (((((var1 >> 15) * (var1 >> 15)) >> 7) * (cal.h1 as i32)) >> 4);
-        let var1: i32 = if var1 < 0 { 0 } else { var1 };
-        let var1: i32 = if var1 > 419430400 { 419430400 } else { var1 };
-        let humidity: f32 = ((var1 >> 12) as f32) / 1024.0;
-
-        Ok(Sample {
-            temperature,
-            pressure,
-            humidity,
-        })
+        Sample::from_raw(&buf, &self.cal)
     }
 }
