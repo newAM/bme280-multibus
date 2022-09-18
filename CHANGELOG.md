@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added SPI implementations for embedded-hal version 1.0.0-alpha.8.
+- Added SPI implementations for embedded-hal-async version 0.1.0-alpha.1.
 
 ### Changed
 - Renamed the `i2c` module to `i2c0`.
