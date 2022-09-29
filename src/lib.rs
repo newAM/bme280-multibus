@@ -1128,8 +1128,8 @@ where
 
 impl<SPI, E> Bme280<crate::spi1::Bme280Bus<SPI>>
 where
-    SPI: eh1::spi::blocking::SpiDevice<Error = E>,
-    SPI::Bus: eh1::spi::blocking::SpiBusRead + eh1::spi::blocking::SpiBusWrite,
+    SPI: eh1::spi::SpiDevice<Error = E>,
+    SPI::Bus: eh1::spi::SpiBusRead + eh1::spi::SpiBusWrite,
 {
     /// Creates a new `Bme280` driver from an embedded-hal version 1 SPI device.
     ///
