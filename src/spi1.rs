@@ -1,4 +1,4 @@
-use eh1::spi::blocking::{SpiBusRead, SpiBusWrite};
+use eh1::spi::{SpiBusRead, SpiBusWrite};
 
 #[cfg(feature = "async")]
 use eha0::spi::{SpiBusRead as SpiBusReadAsync, SpiBusWrite as SpiBusWriteAsync};
@@ -56,8 +56,8 @@ impl<SPI> Bme280Bus<SPI> {
 
 impl<SPI, E> crate::Bme280Bus for Bme280Bus<SPI>
 where
-    SPI: eh1::spi::blocking::SpiDevice<Error = E>,
-    SPI::Bus: eh1::spi::blocking::SpiBusRead + eh1::spi::blocking::SpiBusWrite,
+    SPI: eh1::spi::SpiDevice<Error = E>,
+    SPI::Bus: eh1::spi::SpiBusRead + eh1::spi::SpiBusWrite,
 {
     type Error = E;
 
