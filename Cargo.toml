@@ -16,12 +16,12 @@ async = ["dep:eha0"]
 [dependencies]
 eh0 = { package = "embedded-hal", version = "0.2.7" }
 eh1 = { package = "embedded-hal", version = "=1.0.0-alpha.9" }
-eha0 = { package = "embedded-hal-async", version = "=0.1.0-alpha.2", optional = true }
+eha0 = { package = "embedded-hal-async", version = "=0.1.0-alpha.3", optional = true }
 serde = { version = "1", features = ["derive"], default-features = false, optional = true }
 
 [dev-dependencies]
 ehm0 = { package = "embedded-hal-mock", version = "0.8" }
-ehm1 = { package = "embedded-hal-mock", git = "https://github.com/newAM/embedded-hal-mock", branch = "1.0.0-alpha.9" }
+ehm1 = { package = "embedded-hal-mock", git = "https://github.com/newAM/embedded-hal-mock", branch = "async" }
 ftdi-embedded-hal = { version = "0.13", features = ["libftd2xx"] }
 
 [package.metadata.docs.rs]
