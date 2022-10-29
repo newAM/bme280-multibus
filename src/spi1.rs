@@ -1,7 +1,7 @@
 use eh1::spi::{SpiBusRead, SpiBusWrite};
 
 #[cfg(feature = "async")]
-use eha0::spi::{SpiBusRead as SpiBusReadAsync, SpiBusWrite as SpiBusWriteAsync};
+use eha0a::spi::{SpiBusRead as SpiBusReadAsync, SpiBusWrite as SpiBusWriteAsync};
 
 /// BME280 bus.
 #[derive(Debug)]
@@ -57,7 +57,7 @@ impl<SPI> Bme280Bus<SPI> {
 impl<SPI, E> crate::Bme280Bus for Bme280Bus<SPI>
 where
     SPI: eh1::spi::SpiDevice<Error = E>,
-    SPI::Bus: eh1::spi::SpiBusRead + eh1::spi::SpiBusWrite,
+    SPI::Bus: eh1::spi::SpiBusRead<Error = E> + eh1::spi::SpiBusWrite<Error = E>,
 {
     type Error = E;
 
@@ -77,53 +77,22 @@ where
 #[cfg(feature = "async")]
 impl<SPI, E> crate::Bme280BusAsync for Bme280Bus<SPI>
 where
-    SPI: eha0::spi::SpiDevice<Error = E>,
-    <SPI as eha0::spi::SpiDevice>::Bus: eha0::spi::SpiBusRead + eha0::spi::SpiBusWrite,
+    SPI: eha0a::spi::SpiDevice<Error = E>,
+    <SPI as eha0a::spi::SpiDevice>::Bus:
+        eha0a::spi::SpiBusRead<Error = E> + eha0a::spi::SpiBusWrite<Error = E>,
 {
     type Error = E;
 
-    type ReadFuture<'a> = impl core::future::Future<Output = Result<(), Self::Error>> + 'a
-        where Self: 'a, E: 'a;
-
-    #[allow(unsafe_code)]
-    fn read_regs<'a>(&'a mut self, reg: u8, buf: &'a mut [u8]) -> Self::ReadFuture<'a> {
-        async move {
-            eha0::spi::SpiDevice::transaction(&mut self.spi, move |bus| async move {
-                let bus = unsafe { &mut *bus };
-                bus.write(&[reg | (1 << 7)]).await?;
-                bus.read(buf).await
-            })
-            .await
-        }
+    async fn read_regs(&mut self, reg: u8, buf: &mut [u8]) -> Result<(), Self::Error> {
+        eha0a::spi::transaction!(&mut self.spi, move |bus| async move {
+            bus.write(&[reg | (1 << 7)]).await?;
+            bus.read(buf).await
+        })
+        .await
     }
 
-    type WriteFuture<'a> = impl core::future::Future<Output = Result<(), Self::Error>> + 'a
-        where Self: 'a, E: 'a;
-
-    #[allow(unsafe_code)]
-    fn write_reg(&mut self, reg: u8, data: u8) -> Self::WriteFuture<'_> {
+    async fn write_reg(&mut self, reg: u8, data: u8) -> Result<(), Self::Error> {
         let buf: [u8; 2] = [reg & !(1 << 7), data];
-        async move { self.spi.write(&buf).await }
-    }
-
-    type CalibrateFuture<'a> = impl core::future::Future<Output = Result<crate::Calibration, Self::Error>> + 'a
-        where Self: 'a, E: 'a;
-
-    fn calibration(&mut self) -> Self::CalibrateFuture<'_> {
-        const FIRST: usize = (crate::reg::CALIB_25 - crate::reg::CALIB_00 + 1) as usize;
-        debug_assert_eq!(FIRST, 26);
-        const SECOND: usize = (crate::reg::CALIB_32 - crate::reg::CALIB_26 + 1) as usize;
-        debug_assert_eq!((FIRST + SECOND), crate::NUM_CALIB_REG);
-
-        let mut buf: [u8; crate::NUM_CALIB_REG] = [0; crate::NUM_CALIB_REG];
-
-        async move {
-            self.read_regs(crate::reg::CALIB_00, &mut buf[0..FIRST])
-                .await?;
-            self.read_regs(crate::reg::CALIB_26, &mut buf[FIRST..(FIRST + SECOND)])
-                .await?;
-
-            Ok(buf.into())
-        }
+        self.spi.write(&buf).await
     }
 }

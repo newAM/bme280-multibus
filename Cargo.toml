@@ -11,18 +11,19 @@ keywords = ["i2c", "driver", "embedded-hal-driver", "bosch", "bme280"]
 categories = ["embedded", "hardware-support", "no-std"]
 
 [features]
-async = ["dep:eha0"]
+async = ["dep:eha0a"]
 
 [dependencies]
 eh0 = { package = "embedded-hal", version = "0.2.7" }
 eh1 = { package = "embedded-hal", version = "=1.0.0-alpha.9" }
-eha0 = { package = "embedded-hal-async", version = "=0.1.0-alpha.3", optional = true }
+eha0a = { package = "embedded-hal-async", version = "=0.1.0-alpha.3", optional = true }
 serde = { version = "1", features = ["derive"], default-features = false, optional = true }
 
 [dev-dependencies]
 ehm0 = { package = "embedded-hal-mock", version = "0.8" }
-ehm1 = { package = "embedded-hal-mock", git = "https://github.com/newAM/embedded-hal-mock", branch = "async" }
+ehm1 = { package = "embedded-hal-mock", git = "https://github.com/newAM/embedded-hal-mock", branch = "async", features = ["embedded-hal-async"] }
 ftdi-embedded-hal = { version = "0.13", features = ["libftd2xx"] }
+tokio = { version = "1.21.2", features = ["rt", "macros"] }
 
 [package.metadata.docs.rs]
 all-features = true

@@ -32,13 +32,17 @@
 //!
 //! # Features
 //!
-//! * `async` Enable asynchronous implementations with `embedded-hal-async`.
+//! * `async`: Enable asynchronous implementations with `embedded-hal-async`.
 //!   Requires a nightly toolchain.
-//! * `serde` Add `Serialize` and `Deserialize` to `Sample`.
+//! * `serde`: Implement `Serialize` and `Deserialize` for `Sample`.
 #![no_std]
-#![cfg_attr(feature = "async", feature(type_alias_impl_trait))]
+#![cfg_attr(
+    feature = "async",
+    feature(async_fn_in_trait),
+    allow(incomplete_features)
+)]
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
-#![deny(unsafe_code)]
+#![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
 use core::time::Duration;
@@ -46,7 +50,7 @@ use core::time::Duration;
 pub use eh0;
 pub use eh1;
 #[cfg(feature = "async")]
-pub use eha0;
+pub use eha0a;
 
 /// BME280 I2C bus implementation with embedded-val version 0.2
 pub mod i2c0;
@@ -1015,41 +1019,37 @@ pub trait Bme280Bus {
 }
 
 /// Asynchronous BME280 bus.
-#[cfg(feature = "async")] // TODO: remove when GATs are on stable (1.65?)
+#[cfg(feature = "async")]
 pub trait Bme280BusAsync {
     /// BME280 bus error.
     type Error;
 
-    /// Read future GAT
-    type ReadFuture<'a>: core::future::Future<Output = Result<(), Self::Error>> + 'a
-    where
-        Self: 'a,
-        Self::Error: 'a;
-
     /// Read from the BME280.
     ///
     /// See [`Bme280Bus::read_regs`] for more information.
-    fn read_regs<'a>(&'a mut self, reg: u8, buf: &'a mut [u8]) -> Self::ReadFuture<'a>;
-
-    /// Write future GAT
-    type WriteFuture<'a>: core::future::Future<Output = Result<(), Self::Error>> + 'a
-    where
-        Self: 'a,
-        Self::Error: 'a;
+    async fn read_regs(&mut self, reg: u8, buf: &mut [u8]) -> Result<(), Self::Error>;
 
     /// Write a single register to the BME280.
     ///
     /// See [`Bme280Bus::write_reg`] for more information.
-    fn write_reg(&mut self, reg: u8, data: u8) -> Self::WriteFuture<'_>;
-
-    /// Calibrate future GAT
-    type CalibrateFuture<'a>: core::future::Future<Output = Result<Calibration, Self::Error>> + 'a
-    where
-        Self: 'a,
-        Self::Error: 'a;
+    async fn write_reg(&mut self, reg: u8, data: u8) -> Result<(), Self::Error>;
 
     /// Read the calibration from the chip.
-    fn calibration(&mut self) -> Self::CalibrateFuture<'_>;
+    async fn calibration(&mut self) -> Result<crate::Calibration, Self::Error> {
+        const FIRST: usize = (crate::reg::CALIB_25 - crate::reg::CALIB_00 + 1) as usize;
+        debug_assert_eq!(FIRST, 26);
+        const SECOND: usize = (crate::reg::CALIB_32 - crate::reg::CALIB_26 + 1) as usize;
+        debug_assert_eq!((FIRST + SECOND), crate::NUM_CALIB_REG);
+
+        let mut buf: [u8; crate::NUM_CALIB_REG] = [0; crate::NUM_CALIB_REG];
+
+        self.read_regs(crate::reg::CALIB_00, &mut buf[0..FIRST])
+            .await?;
+        self.read_regs(crate::reg::CALIB_26, &mut buf[FIRST..(FIRST + SECOND)])
+            .await?;
+
+        Ok(buf.into())
+    }
 }
 
 /// BME280 driver.
@@ -1129,7 +1129,7 @@ where
 impl<SPI, E> Bme280<crate::spi1::Bme280Bus<SPI>>
 where
     SPI: eh1::spi::SpiDevice<Error = E>,
-    SPI::Bus: eh1::spi::SpiBusRead + eh1::spi::SpiBusWrite,
+    SPI::Bus: eh1::spi::SpiBusRead<Error = E> + eh1::spi::SpiBusWrite<Error = E>,
 {
     /// Creates a new `Bme280` driver from an embedded-hal version 1 SPI device.
     ///
@@ -1160,22 +1160,66 @@ where
 #[cfg(feature = "async")]
 impl<SPI, E> Bme280<crate::spi1::Bme280Bus<SPI>>
 where
-    SPI: eha0::spi::SpiDevice<Error = E>,
-    <SPI as eha0::spi::SpiDevice>::Bus: eha0::spi::SpiBusRead + eha0::spi::SpiBusWrite,
+    SPI: eha0a::spi::SpiDevice<Error = E>,
+    <SPI as eha0a::spi::SpiDevice>::Bus:
+        eha0a::spi::SpiBusRead<Error = E> + eha0a::spi::SpiBusWrite<Error = E>,
 {
     /// Creates a new `Bme280` driver from an embedded-hal-async SPI device.
-    pub async fn from_spia0(spi: SPI) -> Result<Self, E> {
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
+    /// # let spi = ehm1::spi::Mock::new(&[
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write(0x88),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0; 26]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write(0xE1),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0; 7]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # ]);
+    /// use bme280_multibus::Bme280;
+    ///
+    /// let bme: Bme280<_> = Bme280::from_spia0a(spi).await?;
+    /// # Ok(()) }
+    /// ```
+    pub async fn from_spia0a(spi: SPI) -> Result<Self, E> {
         let bus = crate::spi1::Bme280Bus::new(spi);
         Self::new_async(bus).await
     }
 }
 
-#[cfg(feature = "async")] // TODO: remove when GATs are on stable (1.65?)
+#[cfg(feature = "async")]
 impl<B, E> Bme280<B>
 where
     B: Bme280BusAsync<Error = E>,
 {
     /// Create a new BME280 from a [`Bme280BusAsync`].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
+    /// # let spi = ehm1::spi::Mock::new(&[
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write(0x88),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0; 26]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write(0xE1),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0; 7]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # ]);
+    /// use bme280_multibus::{spi1::Bme280Bus, Bme280};
+    ///
+    /// let bus: Bme280Bus<_> = Bme280Bus::new(spi);
+    /// let bme: Bme280<_> = Bme280::new_async(bus).await?;
+    /// # Ok(()) }
+    /// ```
     pub async fn new_async(mut bus: B) -> Result<Self, E> {
         let cal: Calibration = bus.calibration().await?;
         Ok(Self { bus, cal })
@@ -1187,6 +1231,33 @@ where
     ///
     /// This register is useful as a sanity check to ensure communications are
     /// working with the BME280.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
+    /// # let spi = ehm1::spi::Mock::new(&[
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write(0x88),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0; 26]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write(0xE1),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0; 7]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write(0xD0),
+    /// #   ehm1::spi::Transaction::read(0x60),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # ]);
+    /// use bme280_multibus::{spi1::Bme280Bus, Bme280, CHIP_ID};
+    ///
+    /// let mut bme: Bme280<_> = Bme280::from_spia0a(spi).await?;
+    /// let chip_id: u8 = bme.chip_id_async().await?;
+    /// assert_eq!(chip_id, CHIP_ID);
+    /// # Ok(()) }
+    /// ```
     pub async fn chip_id_async(&mut self) -> Result<u8, E> {
         let mut buf: [u8; 1] = [0];
         self.bus.read_regs(reg::ID, &mut buf).await?;
@@ -1194,11 +1265,62 @@ where
     }
 
     /// Reset the BME280.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
+    /// # let spi = ehm1::spi::Mock::new(&[
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write(0x88),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0; 26]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write(0xE1),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0; 7]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0xE0 & !0x80, 0xB6]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # ]);
+    /// use bme280_multibus::{spi1::Bme280Bus, Bme280};
+    ///
+    /// let mut bme: Bme280<_> = Bme280::from_spia0a(spi).await?;
+    /// bme.reset_async().await?;
+    /// # Ok(()) }
+    /// ```
     pub async fn reset_async(&mut self) -> Result<(), E> {
         self.bus.write_reg(reg::RESET, RESET_MAGIC).await
     }
 
     /// Get the status of the device.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
+    /// # let spi = ehm1::spi::Mock::new(&[
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write(0x88),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0; 26]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write(0xE1),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0; 7]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write(0xF3),
+    /// #   ehm1::spi::Transaction::read(0x00),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # ]);
+    /// use bme280_multibus::{spi1::Bme280Bus, Bme280, Status};
+    ///
+    /// let mut bme: Bme280<_> = Bme280::from_spia0a(spi).await?;
+    /// let status: Status = bme.status_async().await?;
+    /// # Ok(()) }
+    /// ```
     pub async fn status_async(&mut self) -> Result<Status, E> {
         let mut buf: [u8; 1] = [0];
         self.bus.read_regs(reg::STATUS, &mut buf).await?;
@@ -1206,6 +1328,50 @@ where
     }
 
     /// Configure the BME280 settings.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
+    /// # let spi = ehm1::spi::Mock::new(&[
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write(0x88),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0; 26]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write(0xE1),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0; 7]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0xF2 & !0x80, 0b100]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0xF4 & !0x80, 0b10010011]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0xF5 & !0x80, 0b10110000]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # ]);
+    /// use bme280_multibus::{
+    ///     spi1::Bme280Bus, Bme280, Config, CtrlMeas, Filter, Mode, Oversampling, Settings, Standby,
+    /// };
+    ///
+    /// const SETTINGS: Settings = Settings {
+    ///     config: Config::RESET
+    ///         .set_standby_time(Standby::Millis1000)
+    ///         .set_filter(Filter::X16),
+    ///     ctrl_meas: CtrlMeas::RESET
+    ///         .set_osrs_t(Oversampling::X8)
+    ///         .set_osrs_p(Oversampling::X8)
+    ///         .set_mode(Mode::Normal),
+    ///     ctrl_hum: Oversampling::X8,
+    /// };
+    ///
+    /// let mut bme: Bme280<_> = Bme280::from_spia0a(spi).await?;
+    /// bme.settings_async(&SETTINGS).await?;
+    /// # Ok(()) }
+    /// ```
     pub async fn settings_async(&mut self, settings: &Settings) -> Result<(), E> {
         self.bus
             .write_reg(reg::CTRL_HUM, settings.ctrl_hum as u8)
@@ -1217,6 +1383,54 @@ where
     }
 
     /// Read a sample from the BME280.
+    ///
+    /// ```
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
+    /// # let spi = ehm1::spi::Mock::new(&[
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write(0x88),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0; 26]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write(0xE1),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0; 7]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0xF2 & !0x80, 0b100]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0xF4 & !0x80, 0b10010011]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0xF5 & !0x80, 0b10110000]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write(0xF7),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0; 8]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # ]);
+    /// use bme280_multibus::{
+    ///     spi1::Bme280Bus, Bme280, Config, CtrlMeas, Filter, Mode, Oversampling, Sample, Settings,
+    ///     Standby,
+    /// };
+    ///
+    /// const SETTINGS: bme280_multibus::Settings = bme280_multibus::Settings {
+    ///     config: bme280_multibus::Config::RESET
+    ///         .set_standby_time(bme280_multibus::Standby::Millis1000)
+    ///         .set_filter(bme280_multibus::Filter::X16),
+    ///     ctrl_meas: bme280_multibus::CtrlMeas::RESET
+    ///         .set_osrs_t(bme280_multibus::Oversampling::X8)
+    ///         .set_osrs_p(bme280_multibus::Oversampling::X8)
+    ///         .set_mode(bme280_multibus::Mode::Normal),
+    ///     ctrl_hum: bme280_multibus::Oversampling::X8,
+    /// };
+    ///
+    /// let mut bme: Bme280<_> = Bme280::from_spia0a(spi).await?;
+    /// bme.settings_async(&SETTINGS).await?;
+    /// let sample: Sample = bme.sample_async().await.unwrap();
+    /// # Ok(()) }
+    /// ```
     pub async fn sample_async(&mut self) -> Result<Sample, Error<E>> {
         let mut buf: [u8; NUM_MEAS_REG] = [0; NUM_MEAS_REG];
         self.bus
@@ -1247,7 +1461,7 @@ where
     ///     Bme280,
     /// };
     ///
-    /// let mut bus: Bme280Bus<_> = Bme280Bus::new(i2c, Address::SdoGnd);
+    /// let bus: Bme280Bus<_> = Bme280Bus::new(i2c, Address::SdoGnd);
     /// let bme: Bme280<_> = Bme280::new(bus)?;
     /// # Ok::<(), ehm0::MockError>(())
     /// ```
