@@ -29,6 +29,6 @@ let sample: Sample = bme.sample().unwrap();
 
 ## Features
 
-* `async` Enable asynchronous implementations with `embedded-hal-async`.
+* `async`: Enable asynchronous implementations with `embedded-hal-async`.
   Requires a nightly toolchain.
-* `serde` Add `Serialize` and `Deserialize` to `Sample`.
+* `serde`: Implement `Serialize` and `Deserialize` for `Sample`.
