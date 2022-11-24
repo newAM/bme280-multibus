@@ -1120,6 +1120,7 @@ where
     /// let mut bme: Bme280<_> = Bme280::from_spi0(spi, pin)?;
     /// # Ok::<(), bme280_multibus::spi0::Error<ehm0::MockError, ehm0::MockError>>(())
     /// ```
+    #[allow(clippy::unnecessary_safety_doc)]
     pub fn from_spi0(spi: SPI, cs: CS) -> Result<Self, crate::spi0::Error<SpiError, PinError>> {
         let bus = crate::spi0::Bme280Bus::new(spi, cs);
         Self::new(bus)
