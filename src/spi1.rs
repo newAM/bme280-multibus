@@ -32,6 +32,7 @@ impl<SPI> Bme280Bus<SPI> {
     /// # Ok::<(), ehm1::MockError>(())
     /// ```
     #[inline]
+    #[allow(clippy::unnecessary_safety_doc)]
     pub fn new(spi: SPI) -> Self {
         Bme280Bus { spi }
     }

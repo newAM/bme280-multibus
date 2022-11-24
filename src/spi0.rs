@@ -57,6 +57,7 @@ where
     /// # Ok::<(), ehm0::MockError>(())
     /// ```
     #[inline]
+    #[allow(clippy::unnecessary_safety_doc)]
     pub fn new(bus: SPI, cs: CS) -> Self {
         Bme280Bus { bus, cs }
     }
@@ -161,6 +162,7 @@ pub mod infallible_gpio {
         /// # Ok::<(), ehm0::MockError>(())
         /// ```
         #[inline]
+        #[allow(clippy::unnecessary_safety_doc)]
         pub fn new(bus: SPI, cs: CS) -> Self {
             Bme280Bus { bus, cs }
         }
