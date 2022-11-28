@@ -22,7 +22,7 @@ serde = { version = "1", features = ["derive"], default-features = false, option
 [dev-dependencies]
 ehm0 = { package = "embedded-hal-mock", version = "0.8" }
 ehm1 = { package = "embedded-hal-mock", git = "https://github.com/newAM/embedded-hal-mock", branch = "async", features = ["embedded-hal-async"] }
-ftdi-embedded-hal = { version = "0.13", features = ["libftd2xx"] }
+ftdi-embedded-hal = { version = "0.14", features = ["libftd2xx"] }
 tokio = { version = "1.21.2", features = ["rt", "macros"] }
 
 [package.metadata.docs.rs]
