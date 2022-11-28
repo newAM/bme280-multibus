@@ -55,12 +55,12 @@ impl<SPI> Bme280Bus<SPI> {
     }
 }
 
-impl<SPI, E> crate::Bme280Bus for Bme280Bus<SPI>
+impl<SPI> crate::Bme280Bus for Bme280Bus<SPI>
 where
-    SPI: eh1::spi::SpiDevice<Error = E>,
-    SPI::Bus: eh1::spi::SpiBusRead<Error = E> + eh1::spi::SpiBusWrite<Error = E>,
+    SPI: eh1::spi::SpiDevice,
+    SPI::Bus: eh1::spi::SpiBusRead + eh1::spi::SpiBusWrite,
 {
-    type Error = E;
+    type Error = SPI::Error;
 
     fn read_regs(&mut self, reg: u8, buf: &mut [u8]) -> Result<(), Self::Error> {
         self.spi.transaction(|spi| {
@@ -76,13 +76,12 @@ where
 }
 
 #[cfg(feature = "async")]
-impl<SPI, E> crate::Bme280BusAsync for Bme280Bus<SPI>
+impl<SPI> crate::Bme280BusAsync for Bme280Bus<SPI>
 where
-    SPI: eha0a::spi::SpiDevice<Error = E>,
-    <SPI as eha0a::spi::SpiDevice>::Bus:
-        eha0a::spi::SpiBusRead<Error = E> + eha0a::spi::SpiBusWrite<Error = E>,
+    SPI: eha0a::spi::SpiDevice,
+    <SPI as eha0a::spi::SpiDevice>::Bus: eha0a::spi::SpiBusRead + eha0a::spi::SpiBusWrite,
 {
-    type Error = E;
+    type Error = SPI::Error;
 
     async fn read_regs(&mut self, reg: u8, buf: &mut [u8]) -> Result<(), Self::Error> {
         eha0a::spi::transaction!(&mut self.spi, move |bus| async move {
