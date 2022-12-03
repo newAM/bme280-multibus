@@ -46,5 +46,5 @@ fn main() {
     std::thread::sleep(std::time::Duration::from_millis(250));
 
     let sample: bme280_multibus::Sample = bme.sample().expect("Failed to sample BME280");
-    println!("sample = {:#?}", sample);
+    println!("sample = {sample:#?}");
 }
