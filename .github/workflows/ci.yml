@@ -29,8 +29,11 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           target: ${{ matrix.target }}
       - run: cargo build --target ${{ matrix.target }}
-      - run: cargo build --target ${{ matrix.target }} --all-features
-        if: ${{ matrix.toolchain == 'nightly' }}
+      - if: ${{ matrix.target == 'x86_64-unknown-linux-gnu' }}
+        run: cargo build --target ${{ matrix.target }} --examples
+      - if: ${{ matrix.toolchain == 'nightly' }}
+        run: cargo build --target ${{ matrix.target }} --all-features
+        
 
   test:
     name: Unit Tests
