@@ -45,16 +45,18 @@ where
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm0::spi::Mock::new(&[]);
-    /// # let mut pin = ehm0::pin::Mock::new(&[
-    /// #    ehm0::pin::Transaction::set(ehm0::pin::State::High),
+    /// # let spi = ehm::eh0::spi::Mock::new(&[]);
+    /// # let mut pin = ehm::eh0::pin::Mock::new(&[
+    /// #    ehm::eh0::pin::Transaction::set(ehm::eh0::pin::State::High),
     /// # ]);
     /// use bme280_multibus::spi0::Bme280Bus;
     /// use eh0::digital::v2::OutputPin;
     ///
     /// pin.set_high()?;
     /// let mut bme: Bme280Bus<_, _> = Bme280Bus::new(spi, pin);
-    /// # Ok::<(), ehm0::MockError>(())
+    /// # let (mut spi, mut pin) = bme.free();
+    /// # spi.done(); pin.done();
+    /// # Ok::<(), ehm::eh0::MockError>(())
     /// ```
     #[inline]
     #[allow(clippy::unnecessary_safety_doc)]
@@ -62,22 +64,23 @@ where
         Bme280Bus { bus, cs }
     }
 
-    /// Free the SPI bus and CS pin from the W5500.
+    /// Free the SPI bus and CS pin from the BME280.
     ///
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm0::spi::Mock::new(&[]);
-    /// # let mut pin = ehm0::pin::Mock::new(&[
-    /// #    ehm0::pin::Transaction::set(ehm0::pin::State::High),
+    /// # let spi = ehm::eh0::spi::Mock::new(&[]);
+    /// # let mut pin = ehm::eh0::pin::Mock::new(&[
+    /// #    ehm::eh0::pin::Transaction::set(ehm::eh0::pin::State::High),
     /// # ]);
     /// use bme280_multibus::spi0::Bme280Bus;
     /// use eh0::digital::v2::OutputPin;
     ///
     /// pin.set_high()?;
     /// let mut bme: Bme280Bus<_, _> = Bme280Bus::new(spi, pin);
-    /// let (spi, pin) = bme.free();
-    /// # Ok::<(), ehm0::MockError>(())
+    /// let (mut spi, mut pin) = bme.free();
+    /// # spi.done(); pin.done();
+    /// # Ok::<(), ehm::eh0::MockError>(())
     /// ```
     #[inline]
     pub fn free(self) -> (SPI, CS) {
@@ -146,7 +149,7 @@ pub mod infallible_gpio {
         /// # Example
         ///
         /// ```
-        /// # let spi = ehm0::spi::Mock::new(&[]);
+        /// # let spi = ehm::eh0::spi::Mock::new(&[]);
         /// # struct Pin {};
         /// # impl eh0::digital::v2::OutputPin for Pin {
         /// #     type Error = core::convert::Infallible;
@@ -159,7 +162,9 @@ pub mod infallible_gpio {
         ///
         /// pin.set_high().unwrap();
         /// let mut bme: Bme280Bus<_, _> = Bme280Bus::new(spi, pin);
-        /// # Ok::<(), ehm0::MockError>(())
+        /// # let (mut spi, mut pin) = bme.free();
+        /// # spi.done();
+        /// # Ok::<(), ehm::eh0::MockError>(())
         /// ```
         #[inline]
         #[allow(clippy::unnecessary_safety_doc)]
@@ -167,12 +172,12 @@ pub mod infallible_gpio {
             Bme280Bus { bus, cs }
         }
 
-        /// Free the SPI bus and CS pin from the W5500.
+        /// Free the SPI bus and CS pin from the BME280.
         ///
         /// # Example
         ///
         /// ```
-        /// # let spi = ehm0::spi::Mock::new(&[]);
+        /// # let spi = ehm::eh0::spi::Mock::new(&[]);
         /// # struct Pin {};
         /// # impl eh0::digital::v2::OutputPin for Pin {
         /// #     type Error = core::convert::Infallible;
@@ -185,8 +190,9 @@ pub mod infallible_gpio {
         ///
         /// pin.set_high().unwrap();
         /// let mut bme: Bme280Bus<_, _> = Bme280Bus::new(spi, pin);
-        /// let (spi, pin) = bme.free();
-        /// # Ok::<(), ehm0::MockError>(())
+        /// let (mut spi, pin) = bme.free();
+        /// # spi.done();
+        /// # Ok::<(), ehm::eh0::MockError>(())
         /// ```
         #[inline]
         pub fn free(self) -> (SPI, CS) {
