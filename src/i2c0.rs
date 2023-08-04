@@ -25,10 +25,12 @@ where
     /// # Example
     ///
     /// ```
-    /// # let i2c = ehm0::i2c::Mock::new(&[]);
+    /// # let i2c = ehm::eh0::i2c::Mock::new(&[]);
     /// use bme280_multibus::i2c0::{Address, Bme280Bus};
     ///
     /// let mut bme: Bme280Bus<_> = Bme280Bus::new(i2c, Address::SdoGnd);
+    /// # let mut i2c = bme.free();
+    /// # i2c.done();
     /// ```
     #[inline]
     pub fn new(bus: I2C, address: Address) -> Self {
@@ -43,11 +45,12 @@ where
     /// # Example
     ///
     /// ```
-    /// # let i2c = ehm0::i2c::Mock::new(&[]);
+    /// # let i2c = ehm::eh0::i2c::Mock::new(&[]);
     /// use bme280_multibus::i2c0::{Address, Bme280Bus};
     ///
     /// let mut bme: Bme280Bus<_> = Bme280Bus::new(i2c, Address::SdoGnd);
-    /// let i2c = bme.free();
+    /// let mut i2c = bme.free();
+    /// # i2c.done();
     /// ```
     #[inline]
     pub fn free(self) -> I2C {

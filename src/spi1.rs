@@ -1,7 +1,7 @@
-use eh1::spi::{SpiBusRead, SpiBusWrite};
+// use eh1::spi::{SpiBusRead, SpiBusWrite};
 
-#[cfg(feature = "async")]
-use eha0a::spi::{SpiBusRead as SpiBusReadAsync, SpiBusWrite as SpiBusWriteAsync};
+// #[cfg(feature = "async")]
+// use eha0a::spi::{SpiBusRead as SpiBusReadAsync, SpiBusWrite as SpiBusWriteAsync};
 
 /// BME280 bus.
 #[derive(Debug)]
@@ -25,11 +25,12 @@ impl<SPI> Bme280Bus<SPI> {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[]);
+    /// # let spi = ehm::eh1::spi::Mock::new(&[]);
     /// use bme280_multibus::spi1::Bme280Bus;
     ///
     /// let mut bme: Bme280Bus<_> = Bme280Bus::new(spi);
-    /// # Ok::<(), ehm1::MockError>(())
+    /// # bme.free().done();
+    /// # Ok::<(), ehm::eh1::MockError>(())
     /// ```
     #[inline]
     #[allow(clippy::unnecessary_safety_doc)]
@@ -37,17 +38,18 @@ impl<SPI> Bme280Bus<SPI> {
         Bme280Bus { spi }
     }
 
-    /// Free the SPI bus and CS pin from the W5500.
+    /// Free the SPI bus and CS pin from the BME280.
     ///
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[]);
+    /// # let spi = ehm::eh1::spi::Mock::new(&[]);
     /// use bme280_multibus::spi1::Bme280Bus;
     ///
     /// let mut bme: Bme280Bus<_> = Bme280Bus::new(spi);
-    /// let spi = bme.free();
-    /// # Ok::<(), ehm1::MockError>(())
+    /// let mut spi = bme.free();
+    /// # spi.done();
+    /// # Ok::<(), ehm::eh1::MockError>(())
     /// ```
     #[inline]
     pub fn free(self) -> SPI {
@@ -58,20 +60,22 @@ impl<SPI> Bme280Bus<SPI> {
 impl<SPI> crate::Bme280Bus for Bme280Bus<SPI>
 where
     SPI: eh1::spi::SpiDevice,
-    SPI::Bus: eh1::spi::SpiBusRead + eh1::spi::SpiBusWrite,
 {
     type Error = SPI::Error;
 
     fn read_regs(&mut self, reg: u8, buf: &mut [u8]) -> Result<(), Self::Error> {
-        self.spi.transaction(|spi| {
-            spi.write(&[reg | (1 << 7)])?;
-            spi.read(buf)
-        })
+        let a = &[reg | (1 << 7)];
+        let mut ops = [
+            eh1::spi::Operation::Write(a),
+            eh1::spi::Operation::Read(buf),
+        ];
+        self.spi.transaction(&mut ops)
     }
 
     fn write_reg(&mut self, reg: u8, data: u8) -> Result<(), Self::Error> {
-        let buf: [u8; 2] = [reg & !(1 << 7), data];
-        self.spi.transaction(|spi| spi.write(&buf))
+        let buf = &[reg & !(1 << 7), data];
+        let mut ops = [eh1::spi::Operation::Write(buf)];
+        self.spi.transaction(&mut ops)
     }
 }
 
@@ -79,20 +83,21 @@ where
 impl<SPI> crate::Bme280BusAsync for Bme280Bus<SPI>
 where
     SPI: eha0a::spi::SpiDevice,
-    <SPI as eha0a::spi::SpiDevice>::Bus: eha0a::spi::SpiBusRead + eha0a::spi::SpiBusWrite,
 {
     type Error = SPI::Error;
 
     async fn read_regs(&mut self, reg: u8, buf: &mut [u8]) -> Result<(), Self::Error> {
-        eha0a::spi::transaction!(&mut self.spi, move |bus| async move {
-            bus.write(&[reg | (1 << 7)]).await?;
-            bus.read(buf).await
-        })
-        .await
+        let a = &[reg | (1 << 7)];
+        let mut ops = [
+            eh1::spi::Operation::Write(a),
+            eh1::spi::Operation::Read(buf),
+        ];
+        self.spi.transaction(&mut ops).await
     }
 
     async fn write_reg(&mut self, reg: u8, data: u8) -> Result<(), Self::Error> {
-        let buf: [u8; 2] = [reg & !(1 << 7), data];
-        self.spi.write(&buf).await
+        let buf = &[reg & !(1 << 7), data];
+        let mut ops = [eh1::spi::Operation::Write(buf)];
+        self.spi.transaction(&mut ops).await
     }
 }

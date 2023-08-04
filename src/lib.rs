@@ -3,13 +3,13 @@
 //! # Example
 //!
 //! ```
-//! # let i2c = ehm0::i2c::Mock::new(&[
-//! #   ehm0::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
-//! #   ehm0::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
-//! #   ehm0::i2c::Transaction::write(0x76, vec![0xF2, 0b100]),
-//! #   ehm0::i2c::Transaction::write(0x76, vec![0xF4, 0b10010011]),
-//! #   ehm0::i2c::Transaction::write(0x76, vec![0xF5, 0b10110000]),
-//! #   ehm0::i2c::Transaction::write_read(0x76, vec![0xF7], vec![0; 8]),
+//! # let i2c = ehm::eh0::i2c::Mock::new(&[
+//! #   ehm::eh0::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
+//! #   ehm::eh0::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
+//! #   ehm::eh0::i2c::Transaction::write(0x76, vec![0xF2, 0b100]),
+//! #   ehm::eh0::i2c::Transaction::write(0x76, vec![0xF4, 0b10010011]),
+//! #   ehm::eh0::i2c::Transaction::write(0x76, vec![0xF5, 0b10110000]),
+//! #   ehm::eh0::i2c::Transaction::write_read(0x76, vec![0xF7], vec![0; 8]),
 //! # ]);
 //! use bme280_multibus::{i2c0::Address, Bme280, Sample, Standby};
 //!
@@ -27,7 +27,8 @@
 //! let mut bme: Bme280<_> = Bme280::from_i2c0(i2c, Address::SdoGnd)?;
 //! bme.settings(&SETTINGS)?;
 //! let sample: Sample = bme.sample().unwrap();
-//! # Ok::<(), ehm0::MockError>(())
+//! # bme.free().free().done();
+//! # Ok::<(), ehm::eh0::MockError>(())
 //! ```
 //!
 //! # Features
@@ -1069,14 +1070,15 @@ where
     /// # Example
     ///
     /// ```
-    /// # let i2c = ehm0::i2c::Mock::new(&[
-    /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
-    /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
+    /// # let i2c = ehm::eh0::i2c::Mock::new(&[
+    /// #   ehm::eh0::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
+    /// #   ehm::eh0::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
     /// # ]);
     /// use bme280_multibus::{i2c0::Address, Bme280};
     ///
     /// let mut bme: Bme280<_> = Bme280::from_i2c0(i2c, Address::SdoGnd)?;
-    /// # Ok::<(), ehm0::MockError>(())
+    /// # bme.free().free().done();
+    /// # Ok::<(), ehm::eh0::MockError>(())
     /// ```
     pub fn from_i2c0(i2c: I2C, address: crate::i2c0::Address) -> Result<Self, E> {
         let bus = crate::i2c0::Bme280Bus::new(i2c, address);
@@ -1100,25 +1102,27 @@ where
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm0::spi::Mock::new(&[
-    /// #   ehm0::spi::Transaction::write(vec![0x88]),
-    /// #   ehm0::spi::Transaction::transfer(vec![0; 26], vec![0; 26]),
-    /// #   ehm0::spi::Transaction::write(vec![0xE1]),
-    /// #   ehm0::spi::Transaction::transfer(vec![0; 7], vec![0; 7]),
+    /// # let spi = ehm::eh0::spi::Mock::new(&[
+    /// #   ehm::eh0::spi::Transaction::write(vec![0x88]),
+    /// #   ehm::eh0::spi::Transaction::transfer(vec![0; 26], vec![0; 26]),
+    /// #   ehm::eh0::spi::Transaction::write(vec![0xE1]),
+    /// #   ehm::eh0::spi::Transaction::transfer(vec![0; 7], vec![0; 7]),
     /// # ]);
-    /// # let mut pin = ehm0::pin::Mock::new(&[
-    /// #    ehm0::pin::Transaction::set(ehm0::pin::State::High),
-    /// #    ehm0::pin::Transaction::set(ehm0::pin::State::Low),
-    /// #    ehm0::pin::Transaction::set(ehm0::pin::State::High),
-    /// #    ehm0::pin::Transaction::set(ehm0::pin::State::Low),
-    /// #    ehm0::pin::Transaction::set(ehm0::pin::State::High),
+    /// # let mut pin = ehm::eh0::pin::Mock::new(&[
+    /// #    ehm::eh0::pin::Transaction::set(ehm::eh0::pin::State::High),
+    /// #    ehm::eh0::pin::Transaction::set(ehm::eh0::pin::State::Low),
+    /// #    ehm::eh0::pin::Transaction::set(ehm::eh0::pin::State::High),
+    /// #    ehm::eh0::pin::Transaction::set(ehm::eh0::pin::State::Low),
+    /// #    ehm::eh0::pin::Transaction::set(ehm::eh0::pin::State::High),
     /// # ]);
     /// use bme280_multibus::Bme280;
     /// use eh0::digital::v2::OutputPin;
     ///
     /// pin.set_high()?;
     /// let mut bme: Bme280<_> = Bme280::from_spi0(spi, pin)?;
-    /// # Ok::<(), bme280_multibus::spi0::Error<ehm0::MockError, ehm0::MockError>>(())
+    /// # let (mut spi, mut pin) = bme.free().free();
+    /// # spi.done(); pin.done();
+    /// # Ok::<(), bme280_multibus::spi0::Error<ehm::eh0::MockError, ehm::eh0::MockError>>(())
     /// ```
     #[allow(clippy::unnecessary_safety_doc)]
     pub fn from_spi0(spi: SPI, cs: CS) -> Result<Self, crate::spi0::Error<SpiError, PinError>> {
@@ -1130,26 +1134,26 @@ where
 impl<SPI, E> Bme280<crate::spi1::Bme280Bus<SPI>>
 where
     SPI: eh1::spi::SpiDevice<Error = E>,
-    SPI::Bus: eh1::spi::SpiBusRead<Error = E> + eh1::spi::SpiBusWrite<Error = E>,
 {
     /// Creates a new `Bme280` driver from an embedded-hal version 1 SPI device.
     ///
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write(0x88),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0; 26]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write(0xE1),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0; 7]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write(0x88),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0; 26]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write(0xE1),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0; 7]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use bme280_multibus::Bme280;
     ///
     /// let mut bme: Bme280<_> = Bme280::from_spi1(spi)?;
+    /// # bme.free().free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     pub fn from_spi1(spi: SPI) -> Result<Self, E> {
@@ -1162,8 +1166,6 @@ where
 impl<SPI, E> Bme280<crate::spi1::Bme280Bus<SPI>>
 where
     SPI: eha0a::spi::SpiDevice<Error = E>,
-    <SPI as eha0a::spi::SpiDevice>::Bus:
-        eha0a::spi::SpiBusRead<Error = E> + eha0a::spi::SpiBusWrite<Error = E>,
 {
     /// Creates a new `Bme280` driver from an embedded-hal-async SPI device.
     ///
@@ -1172,20 +1174,20 @@ where
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write(0x88),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0; 26]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write(0xE1),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0; 7]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write(0x88),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0; 26]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write(0xE1),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0; 7]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use bme280_multibus::Bme280;
     ///
     /// let bme: Bme280<_> = Bme280::from_spia0a(spi).await?;
-    /// # Ok(()) }
+    /// # bme.free().free().done(); Ok(()) }
     /// ```
     pub async fn from_spia0a(spi: SPI) -> Result<Self, E> {
         let bus = crate::spi1::Bme280Bus::new(spi);
@@ -1205,21 +1207,21 @@ where
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write(0x88),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0; 26]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write(0xE1),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0; 7]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write(0x88),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0; 26]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write(0xE1),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0; 7]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use bme280_multibus::{spi1::Bme280Bus, Bme280};
     ///
     /// let bus: Bme280Bus<_> = Bme280Bus::new(spi);
     /// let bme: Bme280<_> = Bme280::new_async(bus).await?;
-    /// # Ok(()) }
+    /// # bme.free().free().done(); Ok(()) }
     /// ```
     pub async fn new_async(mut bus: B) -> Result<Self, E> {
         let cal: Calibration = bus.calibration().await?;
@@ -1238,26 +1240,26 @@ where
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write(0x88),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0; 26]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write(0xE1),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0; 7]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write(0xD0),
-    /// #   ehm1::spi::Transaction::read(0x60),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write(0x88),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0; 26]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write(0xE1),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0; 7]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write(0xD0),
+    /// #   ehm::eh1::spi::Transaction::read(0x60),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use bme280_multibus::{spi1::Bme280Bus, Bme280, CHIP_ID};
     ///
     /// let mut bme: Bme280<_> = Bme280::from_spia0a(spi).await?;
     /// let chip_id: u8 = bme.chip_id_async().await?;
     /// assert_eq!(chip_id, CHIP_ID);
-    /// # Ok(()) }
+    /// # bme.free().free().done(); Ok(()) }
     /// ```
     pub async fn chip_id_async(&mut self) -> Result<u8, E> {
         let mut buf: [u8; 1] = [0];
@@ -1272,24 +1274,24 @@ where
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write(0x88),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0; 26]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write(0xE1),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0; 7]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0xE0 & !0x80, 0xB6]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write(0x88),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0; 26]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write(0xE1),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0; 7]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0xE0 & !0x80, 0xB6]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use bme280_multibus::{spi1::Bme280Bus, Bme280};
     ///
     /// let mut bme: Bme280<_> = Bme280::from_spia0a(spi).await?;
     /// bme.reset_async().await?;
-    /// # Ok(()) }
+    /// # bme.free().free().done(); Ok(()) }
     /// ```
     pub async fn reset_async(&mut self) -> Result<(), E> {
         self.bus.write_reg(reg::RESET, RESET_MAGIC).await
@@ -1302,25 +1304,25 @@ where
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write(0x88),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0; 26]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write(0xE1),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0; 7]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write(0xF3),
-    /// #   ehm1::spi::Transaction::read(0x00),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write(0x88),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0; 26]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write(0xE1),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0; 7]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write(0xF3),
+    /// #   ehm::eh1::spi::Transaction::read(0x00),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use bme280_multibus::{spi1::Bme280Bus, Bme280, Status};
     ///
     /// let mut bme: Bme280<_> = Bme280::from_spia0a(spi).await?;
     /// let status: Status = bme.status_async().await?;
-    /// # Ok(()) }
+    /// # bme.free().free().done(); Ok(()) }
     /// ```
     pub async fn status_async(&mut self) -> Result<Status, E> {
         let mut buf: [u8; 1] = [0];
@@ -1335,24 +1337,24 @@ where
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write(0x88),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0; 26]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write(0xE1),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0; 7]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0xF2 & !0x80, 0b100]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0xF4 & !0x80, 0b10010011]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0xF5 & !0x80, 0b10110000]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write(0x88),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0; 26]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write(0xE1),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0; 7]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0xF2 & !0x80, 0b100]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0xF4 & !0x80, 0b10010011]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0xF5 & !0x80, 0b10110000]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use bme280_multibus::{
     ///     spi1::Bme280Bus, Bme280, Config, CtrlMeas, Filter, Mode, Oversampling, Settings, Standby,
@@ -1371,7 +1373,7 @@ where
     ///
     /// let mut bme: Bme280<_> = Bme280::from_spia0a(spi).await?;
     /// bme.settings_async(&SETTINGS).await?;
-    /// # Ok(()) }
+    /// # bme.free().free().done(); Ok(()) }
     /// ```
     pub async fn settings_async(&mut self, settings: &Settings) -> Result<(), E> {
         self.bus
@@ -1388,28 +1390,28 @@ where
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write(0x88),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0; 26]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write(0xE1),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0; 7]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0xF2 & !0x80, 0b100]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0xF4 & !0x80, 0b10010011]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0xF5 & !0x80, 0b10110000]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write(0xF7),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0; 8]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write(0x88),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0; 26]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write(0xE1),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0; 7]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0xF2 & !0x80, 0b100]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0xF4 & !0x80, 0b10010011]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0xF5 & !0x80, 0b10110000]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write(0xF7),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0; 8]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use bme280_multibus::{
     ///     spi1::Bme280Bus, Bme280, Config, CtrlMeas, Filter, Mode, Oversampling, Sample, Settings,
@@ -1430,7 +1432,7 @@ where
     /// let mut bme: Bme280<_> = Bme280::from_spia0a(spi).await?;
     /// bme.settings_async(&SETTINGS).await?;
     /// let sample: Sample = bme.sample_async().await.unwrap();
-    /// # Ok(()) }
+    /// # bme.free().free().done(); Ok(()) }
     /// ```
     pub async fn sample_async(&mut self) -> Result<Sample, Error<E>> {
         let mut buf: [u8; NUM_MEAS_REG] = [0; NUM_MEAS_REG];
@@ -1453,9 +1455,9 @@ where
     /// # Example
     ///
     /// ```
-    /// # let i2c = ehm0::i2c::Mock::new(&[
-    /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
-    /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
+    /// # let i2c = ehm::eh0::i2c::Mock::new(&[
+    /// #   ehm::eh0::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
+    /// #   ehm::eh0::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
     /// # ]);
     /// use bme280_multibus::{
     ///     i2c0::{Address, Bme280Bus},
@@ -1464,11 +1466,37 @@ where
     ///
     /// let bus: Bme280Bus<_> = Bme280Bus::new(i2c, Address::SdoGnd);
     /// let bme: Bme280<_> = Bme280::new(bus)?;
-    /// # Ok::<(), ehm0::MockError>(())
+    /// # bme.free().free().done();
+    /// # Ok::<(), ehm::eh0::MockError>(())
     /// ```
     pub fn new(mut bus: B) -> Result<Self, E> {
         let cal: Calibration = bus.calibration()?;
         Ok(Self { bus, cal })
+    }
+
+    /// Free the I2C bus from the BME280.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # let i2c = ehm::eh0::i2c::Mock::new(&[
+    /// #   ehm::eh0::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
+    /// #   ehm::eh0::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
+    /// # ]);
+    /// use bme280_multibus::{
+    ///     i2c0::{Address, Bme280Bus},
+    ///     Bme280,
+    /// };
+    ///
+    /// let bus: Bme280Bus<_> = Bme280Bus::new(i2c, Address::SdoGnd);
+    /// let bme: Bme280<_> = Bme280::new(bus)?;
+    /// let bus: Bme280Bus<_> = bme.free();
+    /// # bus.free().done();
+    /// # Ok::<(), ehm::eh0::MockError>(())
+    /// ```
+    #[inline]
+    pub fn free(self) -> B {
+        self.bus
     }
 
     /// BME280 chip ID.
@@ -1481,17 +1509,18 @@ where
     /// # Example
     ///
     /// ```
-    /// # let i2c = ehm0::i2c::Mock::new(&[
-    /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
-    /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
-    /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0xD0], vec![0x60]),
+    /// # let i2c = ehm::eh0::i2c::Mock::new(&[
+    /// #   ehm::eh0::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
+    /// #   ehm::eh0::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
+    /// #   ehm::eh0::i2c::Transaction::write_read(0x76, vec![0xD0], vec![0x60]),
     /// # ]);
     /// use bme280_multibus::{i2c0::Address, Bme280, CHIP_ID};
     ///
     /// let mut bme: Bme280<_> = Bme280::from_i2c0(i2c, Address::SdoGnd)?;
     /// let chip_id: u8 = bme.chip_id()?;
     /// assert_eq!(chip_id, CHIP_ID);
-    /// # Ok::<(), ehm0::MockError>(())
+    /// # bme.free().free().done();
+    /// # Ok::<(), ehm::eh0::MockError>(())
     /// ```
     pub fn chip_id(&mut self) -> Result<u8, E> {
         let mut buf: [u8; 1] = [0];
@@ -1504,16 +1533,17 @@ where
     /// # Example
     ///
     /// ```
-    /// # let i2c = ehm0::i2c::Mock::new(&[
-    /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
-    /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
-    /// #   ehm0::i2c::Transaction::write(0x76, vec![0xE0, 0xB6]),
+    /// # let i2c = ehm::eh0::i2c::Mock::new(&[
+    /// #   ehm::eh0::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
+    /// #   ehm::eh0::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
+    /// #   ehm::eh0::i2c::Transaction::write(0x76, vec![0xE0, 0xB6]),
     /// # ]);
     /// use bme280_multibus::{i2c0::Address, Bme280};
     ///
     /// let mut bme: Bme280<_> = Bme280::from_i2c0(i2c, Address::SdoGnd)?;
     /// bme.reset()?;
-    /// # Ok::<(), ehm0::MockError>(())
+    /// # bme.free().free().done();
+    /// # Ok::<(), ehm::eh0::MockError>(())
     /// ```
     pub fn reset(&mut self) -> Result<(), E> {
         self.bus.write_reg(reg::RESET, RESET_MAGIC)
@@ -1526,16 +1556,17 @@ where
     /// Check if a conversion is running.
     ///
     /// ```
-    /// # let i2c = ehm0::i2c::Mock::new(&[
-    /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
-    /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
-    /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0xF3], vec![0]),
+    /// # let i2c = ehm::eh0::i2c::Mock::new(&[
+    /// #   ehm::eh0::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
+    /// #   ehm::eh0::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
+    /// #   ehm::eh0::i2c::Transaction::write_read(0x76, vec![0xF3], vec![0]),
     /// # ]);
     /// use bme280_multibus::{i2c0::Address, Bme280, Status};
     ///
     /// let mut bme: Bme280<_> = Bme280::from_i2c0(i2c, Address::SdoGnd)?;
     /// let status: Status = bme.status()?;
-    /// # Ok::<(), ehm0::MockError>(())
+    /// # bme.free().free().done();
+    /// # Ok::<(), ehm::eh0::MockError>(())
     /// ```
     pub fn status(&mut self) -> Result<Status, E> {
         let mut buf: [u8; 1] = [0];
@@ -1548,12 +1579,12 @@ where
     /// # Example
     ///
     /// ```
-    /// # let i2c = ehm0::i2c::Mock::new(&[
-    /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
-    /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
-    /// #   ehm0::i2c::Transaction::write(0x76, vec![0xF2, 0b100]),
-    /// #   ehm0::i2c::Transaction::write(0x76, vec![0xF4, 0b10010011]),
-    /// #   ehm0::i2c::Transaction::write(0x76, vec![0xF5, 0b10110000]),
+    /// # let i2c = ehm::eh0::i2c::Mock::new(&[
+    /// #   ehm::eh0::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
+    /// #   ehm::eh0::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
+    /// #   ehm::eh0::i2c::Transaction::write(0x76, vec![0xF2, 0b100]),
+    /// #   ehm::eh0::i2c::Transaction::write(0x76, vec![0xF4, 0b10010011]),
+    /// #   ehm::eh0::i2c::Transaction::write(0x76, vec![0xF5, 0b10110000]),
     /// # ]);
     /// use bme280_multibus::{
     ///     i2c0::Address, Bme280, Config, CtrlMeas, Filter, Mode, Oversampling, Settings, Standby,
@@ -1572,7 +1603,8 @@ where
     ///
     /// let mut bme: Bme280<_> = Bme280::from_i2c0(i2c, Address::SdoGnd)?;
     /// bme.settings(&SETTINGS)?;
-    /// # Ok::<(), ehm0::MockError>(())
+    /// # bme.free().free().done();
+    /// # Ok::<(), ehm::eh0::MockError>(())
     /// ```
     pub fn settings(&mut self, settings: &Settings) -> Result<(), E> {
         self.bus.write_reg(reg::CTRL_HUM, settings.ctrl_hum as u8)?;
@@ -1585,13 +1617,13 @@ where
     /// # Example
     ///
     /// ```
-    /// # let i2c = ehm0::i2c::Mock::new(&[
-    /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
-    /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
-    /// #   ehm0::i2c::Transaction::write(0x76, vec![0xF2, 0b100]),
-    /// #   ehm0::i2c::Transaction::write(0x76, vec![0xF4, 0b10010011]),
-    /// #   ehm0::i2c::Transaction::write(0x76, vec![0xF5, 0b10110000]),
-    /// #   ehm0::i2c::Transaction::write_read(0x76, vec![0xF7], vec![0; 8]),
+    /// # let i2c = ehm::eh0::i2c::Mock::new(&[
+    /// #   ehm::eh0::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
+    /// #   ehm::eh0::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
+    /// #   ehm::eh0::i2c::Transaction::write(0x76, vec![0xF2, 0b100]),
+    /// #   ehm::eh0::i2c::Transaction::write(0x76, vec![0xF4, 0b10010011]),
+    /// #   ehm::eh0::i2c::Transaction::write(0x76, vec![0xF5, 0b10110000]),
+    /// #   ehm::eh0::i2c::Transaction::write_read(0x76, vec![0xF7], vec![0; 8]),
     /// # ]);
     /// use bme280_multibus::{i2c0::Address, Bme280, Sample, Standby};
     ///
@@ -1609,7 +1641,8 @@ where
     /// let mut bme: Bme280<_> = Bme280::from_i2c0(i2c, Address::SdoGnd)?;
     /// bme.settings(&SETTINGS)?;
     /// let sample: Sample = bme.sample().unwrap();
-    /// # Ok::<(), ehm0::MockError>(())
+    /// # bme.free().free().done();
+    /// # Ok::<(), ehm::eh0::MockError>(())
     /// ```
     pub fn sample(&mut self) -> Result<Sample, Error<E>> {
         let mut buf: [u8; NUM_MEAS_REG] = [0; NUM_MEAS_REG];
