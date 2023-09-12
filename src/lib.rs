@@ -1447,8 +1447,8 @@ impl<B, E> Bme280<B>
 where
     B: Bme280Bus<Error = E>,
 {
-    /// Create a new BME280 from a [`spi0::Bme280Bus`](crate::spi0::Bme280Bus) or
-    /// a [`i2c0::Bme280Bus`](crate::i2c0::Bme280Bus).
+    /// Create a new BME280 from a [`spi0::Bme280Bus`] or
+    /// a [`i2c0::Bme280Bus`].
     ///
     /// # Example
     ///
