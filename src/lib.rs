@@ -49,11 +49,13 @@ pub use eh1;
 #[cfg(feature = "async")]
 pub use eha0a;
 
-/// BME280 I2C bus implementation with embedded-val version 0.2
+/// BME280 I2C bus implementation with embedded-hal version 0.2
 pub mod i2c0;
-/// BME280 SPI bus implementation with embedded-val version 0.2
+/// BME280 I2C bus implementation with embedded-hal version 1
+pub mod i2c1;
+/// BME280 SPI bus implementation with embedded-hal version 0.2
 pub mod spi0;
-/// BME280 SPI bus implementation with embedded-val version 1
+/// BME280 SPI bus implementation with embedded-hal version 1
 pub mod spi1;
 
 /// BME280 chip ID.
@@ -1078,6 +1080,32 @@ where
     /// ```
     pub fn from_i2c0(i2c: I2C, address: crate::i2c0::Address) -> Result<Self, E> {
         let bus = crate::i2c0::Bme280Bus::new(i2c, address);
+        Self::new(bus)
+    }
+}
+
+impl<I2C, E> Bme280<crate::i2c1::Bme280Bus<I2C>>
+where
+    I2C: eh1::i2c::I2c<Error = E>,
+{
+    /// Creates a new `Bme280` driver from a I2C peripheral, and an I2C
+    /// device address.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # let i2c = ehm::eh1::i2c::Mock::new(&[
+    /// #   ehm::eh1::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
+    /// #   ehm::eh1::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
+    /// # ]);
+    /// use bme280_multibus::{i2c1::Address, Bme280};
+    ///
+    /// let mut bme: Bme280<_> = Bme280::from_i2c1(i2c, Address::SdoGnd)?;
+    /// # bme.free().free().done();
+    /// # Ok::<(), ehm::eh1::MockError>(())
+    /// ```
+    pub fn from_i2c1(i2c: I2C, address: crate::i2c1::Address) -> Result<Self, E> {
+        let bus = crate::i2c1::Bme280Bus::new(i2c, address);
         Self::new(bus)
     }
 }
