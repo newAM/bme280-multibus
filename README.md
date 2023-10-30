@@ -9,7 +9,7 @@ BME280 driver with support for I2C and SPI buses.
 ## Example
 
 ```rust
-use bme280_multibus::{i2c0::Address, Bme280, Sample, Standby};
+use bme280_multibus::{Address, Bme280, Sample, Standby};
 
 const SETTINGS: bme280_multibus::Settings = bme280_multibus::Settings {
     config: bme280_multibus::Config::RESET

@@ -1,4 +1,4 @@
-use bme280_multibus::{i2c0::Address, Bme280, Sample};
+use bme280_multibus::{Address, Bme280, Sample};
 
 #[test]
 fn i2c1_sample() {

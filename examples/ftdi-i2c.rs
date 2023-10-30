@@ -30,7 +30,7 @@ fn main() {
 
     let i2c: I2c<Ft232h> = hal_dev.i2c().unwrap();
 
-    let mut bme: Bme280<_> = Bme280::from_i2c0(i2c, bme280_multibus::i2c0::Address::SdoVddio)
+    let mut bme: Bme280<_> = Bme280::from_i2c0(i2c, bme280_multibus::Address::SdoVddio)
         .expect("Failed to initialize BME280");
     bme.reset().expect("Failed to reset");
 
