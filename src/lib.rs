@@ -1112,7 +1112,7 @@ where
     ///
     /// let mut bme: Bme280<_> = Bme280::from_i2c1(i2c, Address::SdoGnd)?;
     /// # bme.free().free().done();
-    /// # Ok::<(), ehm::eh1::MockError>(())
+    /// # Ok::<(), eh1::i2c::ErrorKind>(())
     /// ```
     pub fn from_i2c1(i2c: I2C, address: crate::i2c1::Address) -> Result<Self, E> {
         let bus = crate::i2c1::Bme280Bus::new(i2c, address);
