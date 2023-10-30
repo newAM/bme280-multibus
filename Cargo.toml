@@ -21,8 +21,8 @@ serde = { version = "1", features = ["derive"], default-features = false, option
 
 [dev-dependencies]
 ehm = { package = "embedded-hal-mock", git = "https://github.com/newAM/embedded-hal-mock", branch = "eh1-rc.1", features = ["eh0", "eh1", "embedded-hal-async"] }
-ftdi-embedded-hal = { version = "0.17", features = ["libftd2xx"] }
-tokio = { version = "1.29.1", features = ["rt", "macros"] }
+ftdi-embedded-hal = { version = "0.18", features = ["libftd2xx"] }
+tokio = { version = "1.33.0", features = ["rt", "macros"] }
 
 [package.metadata.docs.rs]
 all-features = true
