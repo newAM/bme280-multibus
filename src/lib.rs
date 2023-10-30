@@ -908,6 +908,16 @@ impl Sample {
     }
 }
 
+/// I2C device address.
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
+#[repr(u8)]
+pub enum Address {
+    /// SDO pin is connected to GND.
+    SdoGnd = 0x76,
+    /// SDO pin is connected to V<sub>DDIO</sub>
+    SdoVddio = 0x77,
+}
+
 /// Sampling error.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Error<B> {

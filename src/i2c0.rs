@@ -1,12 +1,4 @@
-/// I2C device address.
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
-#[repr(u8)]
-pub enum Address {
-    /// SDO pin is connected to GND.
-    SdoGnd = 0x76,
-    /// SDO pin is connected to V<sub>DDIO</sub>
-    SdoVddio = 0x77,
-}
+pub use super::Address;
 
 /// BME280 bus.
 #[derive(Debug)]
