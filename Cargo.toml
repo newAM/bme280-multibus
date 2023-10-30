@@ -1,6 +1,6 @@
 [package]
 name = "bme280-multibus"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Alex Martens <alex@thinglab.org>"]
 edition = "2021"
 repository = "https://github.com/newAM/bme280-multibus"
