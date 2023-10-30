@@ -9,7 +9,7 @@ pub struct Bme280Bus<I2C> {
 
 impl<I2C, E> Bme280Bus<I2C>
 where
-    I2C: eh0::blocking::i2c::Write<Error = E> + eh0::blocking::i2c::WriteRead<Error = E>,
+    I2C: eh1::i2c::I2c<Error = E>,
 {
     /// Creates a new `Bme280Bus` from a I2C peripheral, and an I2C
     /// device address.
@@ -17,8 +17,8 @@ where
     /// # Example
     ///
     /// ```
-    /// # let i2c = ehm::eh0::i2c::Mock::new(&[]);
-    /// use bme280_multibus::i2c0::{Address, Bme280Bus};
+    /// # let i2c = ehm::eh1::i2c::Mock::new(&[]);
+    /// use bme280_multibus::i2c1::{Address, Bme280Bus};
     ///
     /// let mut bme: Bme280Bus<_> = Bme280Bus::new(i2c, Address::SdoGnd);
     /// # let mut i2c = bme.free();
@@ -37,8 +37,8 @@ where
     /// # Example
     ///
     /// ```
-    /// # let i2c = ehm::eh0::i2c::Mock::new(&[]);
-    /// use bme280_multibus::i2c0::{Address, Bme280Bus};
+    /// # let i2c = ehm::eh1::i2c::Mock::new(&[]);
+    /// use bme280_multibus::i2c1::{Address, Bme280Bus};
     ///
     /// let mut bme: Bme280Bus<_> = Bme280Bus::new(i2c, Address::SdoGnd);
     /// let mut i2c = bme.free();
@@ -52,7 +52,7 @@ where
 
 impl<I2C, E> crate::Bme280Bus for Bme280Bus<I2C>
 where
-    I2C: eh0::blocking::i2c::Write<Error = E> + eh0::blocking::i2c::WriteRead<Error = E>,
+    I2C: eh1::i2c::I2c<Error = E>,
 {
     type Error = E;
 
