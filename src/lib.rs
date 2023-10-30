@@ -1659,7 +1659,7 @@ where
     /// #   ehm::eh0::i2c::Transaction::write(0x76, vec![0xF5, 0b10110000]),
     /// #   ehm::eh0::i2c::Transaction::write_read(0x76, vec![0xF7], vec![0; 8]),
     /// # ]);
-    /// use bme280_multibus::{i2c0::Address, Bme280, Sample, Standby};
+    /// use bme280_multibus::{i2c0::Address, Bme280, Sample};
     ///
     /// const SETTINGS: bme280_multibus::Settings = bme280_multibus::Settings {
     ///     config: bme280_multibus::Config::RESET
