@@ -20,7 +20,7 @@ eha0a = { package = "embedded-hal-async", version = "=1.0.0-rc.1", optional = tr
 serde = { version = "1", features = ["derive"], default-features = false, optional = true }
 
 [dev-dependencies]
-ehm = { package = "embedded-hal-mock", git = "https://github.com/newAM/embedded-hal-mock", branch = "eh1-rc.1", features = ["eh0", "eh1", "embedded-hal-async"] }
+ehm = { package = "embedded-hal-mock", version = "=0.10.0-rc.1", features = ["eh0", "eh1", "embedded-hal-async"] }
 ftdi-embedded-hal = { version = "0.18", features = ["libftd2xx"] }
 tokio = { version = "1.33.0", features = ["rt", "macros"] }
 
