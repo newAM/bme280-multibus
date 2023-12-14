@@ -1,8 +1,3 @@
-// use eh1::spi::{SpiBusRead, SpiBusWrite};
-
-// #[cfg(feature = "async")]
-// use eha0a::spi::{SpiBusRead as SpiBusReadAsync, SpiBusWrite as SpiBusWriteAsync};
-
 /// BME280 bus.
 #[derive(Debug)]
 pub struct Bme280Bus<SPI> {
