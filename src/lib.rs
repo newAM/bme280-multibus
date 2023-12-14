@@ -33,20 +33,17 @@
 //!
 //! # Features
 //!
-//! * `async`: Enable asynchronous implementations with `embedded-hal-async`.
-//!   Requires a nightly toolchain.
 //! * `serde`: Implement `Serialize` and `Deserialize` for `Sample`.
 #![no_std]
-#![cfg_attr(feature = "async", allow(async_fn_in_trait))]
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
-#![forbid(unsafe_code)]
+#![allow(async_fn_in_trait)] // https://github.com/rust-embedded/embedded-hal/pull/515#issuecomment-1763525962
 #![warn(missing_docs)]
+#![forbid(unsafe_code)]
 
 use core::time::Duration;
 
 pub use eh0;
 pub use eh1;
-#[cfg(feature = "async")]
 pub use eha0a;
 
 /// BME280 I2C bus implementation with embedded-hal version 0.2
@@ -1028,7 +1025,6 @@ pub trait Bme280Bus {
 }
 
 /// Asynchronous BME280 bus.
-#[cfg(feature = "async")]
 pub trait Bme280BusAsync {
     /// BME280 bus error.
     type Error;
@@ -1196,7 +1192,6 @@ where
     }
 }
 
-#[cfg(feature = "async")]
 impl<SPI, E> Bme280<crate::spi1::Bme280Bus<SPI>>
 where
     SPI: eha0a::spi::SpiDevice<Error = E>,
@@ -1229,7 +1224,6 @@ where
     }
 }
 
-#[cfg(feature = "async")]
 impl<B, E> Bme280<B>
 where
     B: Bme280BusAsync<Error = E>,
