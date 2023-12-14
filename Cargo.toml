@@ -12,6 +12,7 @@ categories = ["embedded", "hardware-support", "no-std"]
 
 [features]
 async = ["dep:eha0a"]
+serde = ["dep:serde"]
 
 [dependencies]
 eh0 = { package = "embedded-hal", version = "0.2.7" }
