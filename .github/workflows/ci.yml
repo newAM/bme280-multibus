@@ -19,18 +19,12 @@ jobs:
           - "x86_64-unknown-linux-gnu"
           - "thumbv6m-none-eabi"
           - "thumbv7em-none-eabi"
-        toolchain:
-          - "stable"
-          - "nightly"
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: ${{ matrix.toolchain }}
           target: ${{ matrix.target }}
-      - run: cargo build --target ${{ matrix.target }}
       - run: cargo build --target ${{ matrix.target }} --all-features
-        if: ${{ matrix.toolchain == 'nightly' }}
 
   test:
     name: Unit Tests
@@ -38,7 +32,7 @@ jobs:
     env: {"RUSTFLAGS": "-D warnings"}
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@nightly
+      - uses: dtolnay/rust-toolchain@stable
       - run: cargo test --all-features
 
   clippy:
@@ -46,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@nightly
+      - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
       - run: cargo clippy --all-features --all-targets -- --deny warnings

@@ -74,7 +74,6 @@ where
     }
 }
 
-#[cfg(feature = "async")]
 impl<SPI> crate::Bme280BusAsync for Bme280Bus<SPI>
 where
     SPI: eha0a::spi::SpiDevice,
