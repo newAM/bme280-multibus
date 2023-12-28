@@ -16,7 +16,7 @@ serde = ["dep:serde"]
 [dependencies]
 eh0 = { package = "embedded-hal", version = "0.2.7" }
 eh1 = { package = "embedded-hal", version = "=1.0.0-rc.3" }
-eha0a = { package = "embedded-hal-async", version = "=1.0.0-rc.3" }
+eha1 = { package = "embedded-hal-async", version = "=1.0.0-rc.3" }
 serde = { version = "1", features = ["derive"], default-features = false, optional = true }
 
 [dev-dependencies]

@@ -76,7 +76,7 @@ where
 
 impl<SPI> crate::Bme280BusAsync for Bme280Bus<SPI>
 where
-    SPI: eha0a::spi::SpiDevice,
+    SPI: eha1::spi::SpiDevice,
 {
     type Error = SPI::Error;
 

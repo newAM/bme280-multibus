@@ -44,7 +44,7 @@ use core::time::Duration;
 
 pub use eh0;
 pub use eh1;
-pub use eha0a;
+pub use eha1;
 
 /// BME280 I2C bus implementation with embedded-hal version 0.2
 pub mod i2c0;
@@ -1194,7 +1194,7 @@ where
 
 impl<SPI, E> Bme280<crate::spi1::Bme280Bus<SPI>>
 where
-    SPI: eha0a::spi::SpiDevice<Error = E>,
+    SPI: eha1::spi::SpiDevice<Error = E>,
 {
     /// Creates a new `Bme280` driver from an embedded-hal-async SPI device.
     ///
