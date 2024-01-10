@@ -15,13 +15,13 @@ serde = ["dep:serde"]
 
 [dependencies]
 eh0 = { package = "embedded-hal", version = "0.2.7" }
-eh1 = { package = "embedded-hal", version = "=1.0.0-rc.3" }
-eha1 = { package = "embedded-hal-async", version = "=1.0.0-rc.3" }
+eh1 = { package = "embedded-hal", version = "1" }
+eha1 = { package = "embedded-hal-async", version = "1" }
 serde = { version = "1", features = ["derive"], default-features = false, optional = true }
 
 [dev-dependencies]
-ehm = { package = "embedded-hal-mock", version = "=0.10.0-rc.4", features = ["eh0", "eh1", "embedded-hal-async"] }
-ftdi-embedded-hal = { version = "0.20", features = ["libftd2xx"] }
+ehm = { package = "embedded-hal-mock", git = "https://github.com/dbrgn/embedded-hal-mock.git", rev = "12ba261a69a96dc76c47e414236ffd45b6efa79b", features = ["eh0", "eh1", "embedded-hal-async"] }
+ftdi-embedded-hal = { version = "0.21", features = ["libftd2xx"] }
 tokio = { version = "1.33.0", features = ["rt", "macros"] }
 
 [package.metadata.docs.rs]

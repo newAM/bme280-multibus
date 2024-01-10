@@ -6,8 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
-- Updated the v1 release of `embedded-hal` from `1.0.0-rc.1` to `1.0.0-rc.3`.
-- Updated the v1 release of `embedded-hal-async` from `1.0.0-rc.1` to `1.0.0-rc.3`.
+- Updated the v1 release of `embedded-hal` from `1.0.0-rc.1` to `1`.
+- Updated the v1 release of `embedded-hal-async` from `1.0.0-rc.1` to `1`.
 
 ### Removed
 - Removed the `async` feature.  Asynchronous implementations are available by default.
