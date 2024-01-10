@@ -20,7 +20,7 @@ impl<SPI> Bme280Bus<SPI> {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm::eh1::spi::Mock::new(&[]);
+    /// # let spi = ehm::eh1::spi::Mock::new::<&[ehm::eh1::spi::Transaction<u8>; 0]>(&[]);
     /// use bme280_multibus::spi1::Bme280Bus;
     ///
     /// let mut bme: Bme280Bus<_> = Bme280Bus::new(spi);
@@ -38,7 +38,7 @@ impl<SPI> Bme280Bus<SPI> {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm::eh1::spi::Mock::new(&[]);
+    /// # let spi = ehm::eh1::spi::Mock::new::<&[ehm::eh1::spi::Transaction<u8>; 0]>(&[]);
     /// use bme280_multibus::spi1::Bme280Bus;
     ///
     /// let mut bme: Bme280Bus<_> = Bme280Bus::new(spi);
