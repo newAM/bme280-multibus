@@ -9,8 +9,8 @@
 
 use bme280_multibus::{Bme280, CHIP_ID};
 use ftdi_embedded_hal::{
-    libftd2xx::{self, Ft232h},
     FtHal, I2c,
+    libftd2xx::{self, Ft232h},
 };
 
 const SETTINGS: bme280_multibus::Settings = bme280_multibus::Settings {
