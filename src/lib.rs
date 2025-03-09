@@ -1104,7 +1104,7 @@ where
     /// #   ehm::eh1::i2c::Transaction::write_read(0x76, vec![0x88], vec![0; 26]),
     /// #   ehm::eh1::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
     /// # ]);
-    /// use bme280_multibus::{i2c1::Address, Bme280};
+    /// use bme280_multibus::{Bme280, i2c1::Address};
     ///
     /// let mut bme: Bme280<_> = Bme280::from_i2c1(i2c, Address::SdoGnd)?;
     /// # bme.free().free().done();
@@ -1245,7 +1245,7 @@ where
     /// #   ehm::eh1::spi::Transaction::read_vec(vec![0; 7]),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use bme280_multibus::{spi1::Bme280Bus, Bme280};
+    /// use bme280_multibus::{Bme280, spi1::Bme280Bus};
     ///
     /// let bus: Bme280Bus<_> = Bme280Bus::new(spi);
     /// let bme: Bme280<_> = Bme280::new_async(bus).await?;
@@ -1282,7 +1282,7 @@ where
     /// #   ehm::eh1::spi::Transaction::read(0x60),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use bme280_multibus::{spi1::Bme280Bus, Bme280, CHIP_ID};
+    /// use bme280_multibus::{Bme280, CHIP_ID, spi1::Bme280Bus};
     ///
     /// let mut bme: Bme280<_> = Bme280::from_spia0a(spi).await?;
     /// let chip_id: u8 = bme.chip_id_async().await?;
@@ -1315,7 +1315,7 @@ where
     /// #   ehm::eh1::spi::Transaction::write_vec(vec![0xE0 & !0x80, 0xB6]),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use bme280_multibus::{spi1::Bme280Bus, Bme280};
+    /// use bme280_multibus::{Bme280, spi1::Bme280Bus};
     ///
     /// let mut bme: Bme280<_> = Bme280::from_spia0a(spi).await?;
     /// bme.reset_async().await?;
@@ -1346,7 +1346,7 @@ where
     /// #   ehm::eh1::spi::Transaction::read(0x00),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use bme280_multibus::{spi1::Bme280Bus, Bme280, Status};
+    /// use bme280_multibus::{Bme280, Status, spi1::Bme280Bus};
     ///
     /// let mut bme: Bme280<_> = Bme280::from_spia0a(spi).await?;
     /// let status: Status = bme.status_async().await?;
@@ -1385,7 +1385,7 @@ where
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use bme280_multibus::{
-    ///     spi1::Bme280Bus, Bme280, Config, CtrlMeas, Filter, Mode, Oversampling, Settings, Standby,
+    ///     Bme280, Config, CtrlMeas, Filter, Mode, Oversampling, Settings, Standby, spi1::Bme280Bus,
     /// };
     ///
     /// const SETTINGS: Settings = Settings {
@@ -1442,8 +1442,8 @@ where
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use bme280_multibus::{
-    ///     spi1::Bme280Bus, Bme280, Config, CtrlMeas, Filter, Mode, Oversampling, Sample, Settings,
-    ///     Standby,
+    ///     Bme280, Config, CtrlMeas, Filter, Mode, Oversampling, Sample, Settings, Standby,
+    ///     spi1::Bme280Bus,
     /// };
     ///
     /// const SETTINGS: bme280_multibus::Settings = bme280_multibus::Settings {
@@ -1488,8 +1488,8 @@ where
     /// #   ehm::eh0::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
     /// # ]);
     /// use bme280_multibus::{
-    ///     i2c0::{Address, Bme280Bus},
     ///     Bme280,
+    ///     i2c0::{Address, Bme280Bus},
     /// };
     ///
     /// let bus: Bme280Bus<_> = Bme280Bus::new(i2c, Address::SdoGnd);
@@ -1512,8 +1512,8 @@ where
     /// #   ehm::eh0::i2c::Transaction::write_read(0x76, vec![0xE1], vec![0; 7]),
     /// # ]);
     /// use bme280_multibus::{
-    ///     i2c0::{Address, Bme280Bus},
     ///     Bme280,
+    ///     i2c0::{Address, Bme280Bus},
     /// };
     ///
     /// let bus: Bme280Bus<_> = Bme280Bus::new(i2c, Address::SdoGnd);
