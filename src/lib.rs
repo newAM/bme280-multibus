@@ -108,7 +108,7 @@ impl From<[u8; NUM_CALIB_REG]> for Calibration {
             h1: buf[25],
             h2: i16::from_le_bytes([buf[26], buf[27]]),
             h3: buf[28],
-            h4: ((buf[29] as i8 as i16) << 4 | (buf[30] as i8 as i16) & 0xF),
+            h4: (((buf[29] as i8 as i16) << 4) | (buf[30] as i8 as i16) & 0xF),
             h5: (((buf[30] as i8 as i16) & 0xF0) >> 4) | ((buf[31] as i8 as i16) << 4),
             h6: buf[32] as i8,
         }
