@@ -35,7 +35,7 @@
 //!
 //! * `serde`: Implement `Serialize` and `Deserialize` for `Sample`.
 #![no_std]
-#![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![allow(async_fn_in_trait)] // https://github.com/rust-embedded/embedded-hal/pull/515#issuecomment-1763525962
 #![warn(missing_docs)]
 #![forbid(unsafe_code)]
